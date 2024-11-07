@@ -12,6 +12,9 @@ class AppConstants {
   static const String getServiceType = '$baseUrl/api/ServiceType/GetAllServiceType';
   static const String getAllStore = '$baseUrl/api/PetOwner/GetAllStore';
   static const String getStoreByServiceTypeId = '$baseUrl/api/PetOwner/GetAllStoreByServiceTypeId';
+  static const String getStoreServiceByStoreId= '$baseUrl/api/Service/GetAllServiceByStoreId';
+  static const String getStoreById= '$baseUrl/api/PetOwner/GetStoreById';
+  static const String getAllStoreServiceByServiceId= '$baseUrl/api/PetOwner/GetAllStoreServiceByServiceId';
 
   // Hive constants
 

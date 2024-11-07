@@ -131,9 +131,6 @@ Future<CommonResponse> addPet({
     }
   }
 
-
-
-
 }
 
 final petController = StateNotifierProvider<PetController, bool>(

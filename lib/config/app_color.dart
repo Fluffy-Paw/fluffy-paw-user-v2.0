@@ -72,6 +72,7 @@ class AppColor {
   static const Color lime100 = Color(0xFFECFCCB);
   static const Color blue500 = Color(0xFF3B82F6);
   static const Color amber500 = Color(0xFFF59E0B);
+  static const Color greyColor = Color(0xFF9E9E9E); 
 
   // Colors of status card
 

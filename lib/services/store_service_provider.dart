@@ -7,6 +7,10 @@ abstract class StoreProvider {
   Future<Response> getServiceType();
   Future<Response> getAllStore();
   Future<Response> getAllStoreByServiceTypeId(int serviceTypeId);
+  Future<Response> getStoreServiceByStoreId(int storeId);
+  Future<Response> getStoreById(int storeId);
+  Future<Response> getServiceTime(int serviceStoreId);
+
 
 }
 
@@ -31,6 +35,24 @@ class StoreServiceProvider implements StoreProvider {
   @override
   Future<Response> getAllStoreByServiceTypeId(int serviceTypeId) {
     final response = ref.read(apiClientProvider).get('${AppConstants.getStoreByServiceTypeId}/$serviceTypeId');
+    return response;
+  }
+  
+  @override
+  Future<Response> getStoreById(int storeId) {
+    final response = ref.read(apiClientProvider).get('${AppConstants.getStoreById}/$storeId');
+    return response;
+  }
+  
+  @override
+  Future<Response> getStoreServiceByStoreId(int storeId) {
+    final response = ref.read(apiClientProvider).get('${AppConstants.getStoreServiceByStoreId}/$storeId');
+    return response;
+  }
+  
+  @override
+  Future<Response> getServiceTime(int serviceStoreId) {
+    final response = ref.read(apiClientProvider).get('${AppConstants.getAllStoreServiceByServiceId}/$serviceStoreId');
     return response;
   }
 

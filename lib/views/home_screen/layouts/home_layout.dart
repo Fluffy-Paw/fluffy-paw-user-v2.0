@@ -5,9 +5,11 @@ import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/gen/assets.gen.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
 import 'package:fluffypawuser/models/pet/pet_model.dart';
+import 'package:fluffypawuser/models/pet/service_type_model.dart';
 import 'package:fluffypawuser/models/profile/profile_model.dart';
 import 'package:fluffypawuser/routes.dart';
 import 'package:fluffypawuser/utils/context_less_navigation.dart';
+import 'package:fluffypawuser/views/store/layouts/store_list_by_service_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -214,14 +216,10 @@ class _HomeState extends ConsumerState<HomeLayout> {
   }
   Widget _buildIconContainer() {
   final serviceTypes = ref.watch(storeController.notifier).petTypes;
-  print('Service Types: ${serviceTypes?.map((e) => '${e.name}: ${e.id}')}');
 
-  // Thêm consumer để lắng nghe thay đổi từ controller
   return Consumer(
     builder: (context, ref, child) {
-      // Kiểm tra null/empty nhưng vẫn return container rỗng thay vì SizedBox.shrink()
       if (serviceTypes == null || serviceTypes.isEmpty) {
-        print('Service Types is null or empty');
         return Container(
           margin: EdgeInsets.symmetric(horizontal: 20.w),
           padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 15.w),
@@ -245,7 +243,6 @@ class _HomeState extends ConsumerState<HomeLayout> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: serviceTypes.map((service) {
-            // Hardcode service icons nếu API name không khớp
             String iconPath;
             switch(service.name.toLowerCase()) {
               case 'grooming':
@@ -264,14 +261,19 @@ class _HomeState extends ConsumerState<HomeLayout> {
                 iconPath = Assets.svg.petGrooming;
             }
             
-            print('Rendering service: ${service.name} with icon: $iconPath');
-            
             return Expanded(
               child: _buildIconButton(
                 iconPath,
                 service.name,
                 () {
-                  print('Service tapped: ${service.name} (ID: ${service.id})');
+                  // Sử dụng context.nav để navigate với 2 arguments riêng biệt
+                  context.nav.pushNamed(
+                    Routes.storeListByService,
+                    arguments: StoreListArguments(
+                      serviceTypeId: service.id,
+                      serviceTypeName: service.name,
+                    ),
+                  );
                 },
               ),
             );
@@ -281,6 +283,7 @@ class _HomeState extends ConsumerState<HomeLayout> {
     },
   );
 }
+
 
 Widget _buildIconButton(String iconPath, String label, VoidCallback onTap) {
   return GestureDetector(
@@ -663,4 +666,13 @@ Widget _buildIconButton(String iconPath, String label, VoidCallback onTap) {
   }
 
  
+}
+class StoreListArguments {
+  final int serviceTypeId;
+  final String serviceTypeName;
+
+  StoreListArguments({
+    required this.serviceTypeId,
+    required this.serviceTypeName,
+  });
 }
