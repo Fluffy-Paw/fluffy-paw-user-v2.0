@@ -322,8 +322,8 @@ class _BookingConfirmationLayoutState
           ),
           Divider(height: 24.h),
           _buildPaymentOption(
-            'PayOS',
-            'Thanh toán qua PayOS',
+            'FluffyPay',
+            'Thanh toán bằng FluffyPay',
             Icons.payment,
           ),
         ],
@@ -399,76 +399,94 @@ class _BookingConfirmationLayoutState
   }
 
   Widget _buildBottomBar() {
-    // Convert service cost từ num sang double
-    double totalCost = (service?.cost ?? 0).toDouble();
-    totalCost *= selectedPets.length;
+  // Convert service cost từ num sang double
+  double totalCost = (service?.cost ?? 0).toDouble();
+  totalCost *= selectedPets.length;
 
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: AppColor.whiteColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tổng tiền:',
-                style: AppTextStyle(context).subTitle.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                '\$${totalCost.toStringAsFixed(2)}',
-                style: AppTextStyle(context).title.copyWith(
-                  color: AppColor.violetColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Gap(16.h),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: Handle booking confirmation
-                final bookingData = {
-                  'petIds': widget.selectedPetIds,
-                  'timeSlotId': widget.timeSlotId,
-                  'storeServiceId': widget.storeServiceId,
-                  'paymentMethod': selectedPaymentMethod,
-                  'description': descriptionController.text,
-                  'totalCost': totalCost,
-                };
-                print('Booking data: $bookingData');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.violetColor,
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              child: Text(
-                'Xác nhận đặt lịch',
-                style: AppTextStyle(context).buttonText,
+  return Container(
+    padding: EdgeInsets.all(20.w),
+    decoration: BoxDecoration(
+      color: AppColor.whiteColor,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: Offset(0, -5),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Tổng tiền:',
+              style: AppTextStyle(context).subTitle.copyWith(
+                fontWeight: FontWeight.w600,
               ),
             ),
+            Text(
+              '\$${totalCost.toStringAsFixed(2)}',
+              style: AppTextStyle(context).title.copyWith(
+                color: AppColor.violetColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        Gap(16.h),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () async {
+              try {
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+
+                // Create booking using the store controller
+                await ref.read(storeController.notifier).createBooking(
+                  widget.timeSlotId, // Using timeSlotId as storeServiceId
+                  widget.selectedPetIds,
+                  selectedPaymentMethod,
+                  descriptionController.text,
+                );
+
+                // Hide loading indicator
+                Navigator.pop(context);
+
+                // Navigate back to previous screen
+                Navigator.pop(context);
+              } catch (e) {
+                // Hide loading indicator
+                Navigator.pop(context);
+                debugPrint('Error creating booking: $e');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.violetColor,
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+            ),
+            child: Text(
+              'Xác nhận đặt lịch',
+              style: AppTextStyle(context).buttonText,
+            ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   void dispose() {

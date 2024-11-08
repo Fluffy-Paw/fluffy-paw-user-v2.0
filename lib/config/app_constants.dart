@@ -15,6 +15,11 @@ class AppConstants {
   static const String getStoreServiceByStoreId= '$baseUrl/api/Service/GetAllServiceByStoreId';
   static const String getStoreById= '$baseUrl/api/PetOwner/GetStoreById';
   static const String getAllStoreServiceByServiceId= '$baseUrl/api/PetOwner/GetAllStoreServiceByServiceId';
+  static const String createBooking= '$baseUrl/api/PetOwner/CreateBooking';
+  static const String getVaccingByPetId= '$baseUrl/api/Vaccine/GetAllVaccineHistories';
+  static const String getVaccineDetail= '$baseUrl/api/Vaccine/GetVaccineDetail';
+  static const String addVaccine='$baseUrl/api/Vaccine/AddVaccine';
+  
 
   // Hive constants
 

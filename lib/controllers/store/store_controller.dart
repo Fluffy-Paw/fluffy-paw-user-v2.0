@@ -165,6 +165,24 @@ class StoreController extends StateNotifier<bool> {
       rethrow;
     }
   }
+  Future<void> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description) async {
+    try {
+      state = true;
+      final response = await ref.read(storeServiceProvider).createBooking(storeServiceId, petIds, paymentMethod, description);
+
+      if (response.statusCode == 200) {
+        debugPrint('Booking created successfully');
+      } else {
+        debugPrint('Failed to create booking: ${response.statusMessage}');
+      }
+
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error creating booking: ${e.toString()}');
+      rethrow;
+    }
+  }
 }
 
 final storeController = StateNotifierProvider<StoreController, bool>(

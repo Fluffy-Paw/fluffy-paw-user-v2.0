@@ -2,10 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/config/theme.dart';
+import 'package:fluffypawuser/controllers/vaccine/vaccine_controller.dart';
 import 'package:fluffypawuser/gen/assets.gen.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
 import 'package:fluffypawuser/models/pet/pet_detail_model.dart';
+import 'package:fluffypawuser/models/vaccine/vaccine_model.dart';
+import 'package:fluffypawuser/routes.dart';
+import 'package:fluffypawuser/views/pet/layouts/add_vaccine_layout.dart';
 import 'package:fluffypawuser/views/pet/layouts/update_pet_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +20,7 @@ import 'package:intl/intl.dart';
 
 class PetDetailLayout extends ConsumerStatefulWidget {
   final int petId;
-  
+
   const PetDetailLayout({
     Key? key,
     required this.petId,
@@ -32,6 +36,7 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(petController.notifier).getPetDetail(widget.petId);
+      ref.read(vaccineController.notifier).getVaccineByPetId(widget.petId);
     });
   }
 
@@ -49,19 +54,21 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
             child: Text(
               'Active',
               style: AppTextStyle(context).bodyTextSmall.copyWith(
-                  color: AppColor.processing,
-                  fontWeight: FontWeight.w500),
+                  color: AppColor.processing, fontWeight: FontWeight.w500),
             ),
           ),
         ],
       ),
       body: Consumer(builder: (context, ref, _) {
-        final isLoading = ref.watch(petController);
+        final isLoading =
+            ref.watch(petController) || ref.watch(vaccineController);
+        ;
         if (isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final petDetail = ref.read(petController.notifier).petDetail;
+        final vaccines = ref.read(vaccineController.notifier).vaccineList;
         if (petDetail == null) {
           return const Center(child: Text('No pet details found'));
         }
@@ -113,7 +120,9 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
               ),
               Gap(20.h),
               _buildPersonalInfoCard(context: context, pet: petDetail),
-              Gap(20.h), // Added bottom padding
+              Gap(20.h),
+              _buildVaccineSection(context, vaccines ?? []),
+              Gap(20.h),
             ],
           ),
         );
@@ -171,7 +180,8 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
                       '${pet.weight} kg',
                       style: AppTextStyle(context).bodyText.copyWith(
                             fontWeight: FontWeight.w500,
-                            color: colors(context).bodyTextColor!.withOpacity(0.7),
+                            color:
+                                colors(context).bodyTextColor!.withOpacity(0.7),
                           ),
                     ),
                     Gap(5.h),
@@ -388,12 +398,243 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
         Text(
           value,
           style: AppTextStyle(context).bodyText.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
+                fontWeight: FontWeight.w500,
+              ),
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+
+  Widget _buildVaccineSection(
+      BuildContext context, List<VaccineModel> vaccines) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Vaccine History',
+                style: AppTextStyle(context).title,
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    Routes.addVaccine,
+                    arguments: widget.petId,
+                  ).then((_) {
+                    // Làm mới danh sách vaccine khi quay lại từ màn hình thêm
+                    ref
+                        .read(vaccineController.notifier)
+                        .getVaccineByPetId(widget.petId);
+                  });
+                },
+                child: Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: AppColor.violetColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.add,
+                        size: 16.sp,
+                        color: AppColor.violetColor,
+                      ),
+                      Gap(4.w),
+                      Text(
+                        'Add',
+                        style: AppTextStyle(context).bodyTextSmall.copyWith(
+                              color: AppColor.violetColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Gap(16.h),
+        if (vaccines.isEmpty)
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20.h),
+              child: Text(
+                'No vaccine records found',
+                style: AppTextStyle(context).bodyText.copyWith(
+                      color: Colors.grey,
+                    ),
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: vaccines.length,
+            itemBuilder: (context, index) {
+              final vaccine = vaccines[index];
+              return _buildVaccineCard(context, vaccine);
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildVaccineCard(BuildContext context, VaccineModel vaccine) {
+    Color getStatusColor(String status) {
+      switch (status.toLowerCase()) {
+        case 'completed':
+          return Colors.green;
+        case 'pending':
+          return Colors.orange;
+        case 'expired':
+          return Colors.red;
+        default:
+          return Colors.grey;
+      }
+    }
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16.r),
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              Routes.vaccineDetail,
+              arguments: vaccine.id,
+            ).then((_) {
+              // Làm mới danh sách vaccine khi quay lại từ màn hình thêm
+              ref
+                  .read(vaccineController.notifier)
+                  .getVaccineByPetId(widget.petId);
+            });
+          },
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Row(
+              children: [
+                Container(
+                  width: 70.w,
+                  height: 70.w,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: vaccine.image != null && vaccine.image!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12.r),
+                          child: CachedNetworkImage(
+                            imageUrl: vaccine.image!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Center(
+                              child: Icon(
+                                Icons.medical_services,
+                                color: Colors.grey,
+                                size: 30.sp,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Center(
+                              child: Icon(
+                                Icons.medical_services,
+                                color: Colors.grey,
+                                size: 30.sp,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(
+                            Icons.medical_services,
+                            color: Colors.grey,
+                            size: 30.sp,
+                          ),
+                        ),
+                ),
+                Gap(16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              vaccine.name,
+                              style: AppTextStyle(context).subTitle.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: getStatusColor(vaccine.status)
+                                  .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              vaccine.status,
+                              style:
+                                  AppTextStyle(context).bodyTextSmall.copyWith(
+                                        color: getStatusColor(vaccine.status),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Gap(8.h),
+                      Text(
+                        DateFormat('dd MMM yyyy').format(vaccine.vaccineDate),
+                        style: AppTextStyle(context).bodyTextSmall.copyWith(
+                              color: Colors.grey,
+                            ),
+                      ),
+                      Gap(4.h),
+                      Text(
+                        vaccine.description ?? 'Không có description',
+                        style: AppTextStyle(context).bodyTextSmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

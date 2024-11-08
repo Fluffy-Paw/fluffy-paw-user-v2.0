@@ -1,10 +1,12 @@
 import 'package:fluffypawuser/views/authentication/login_view.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/bottom_navigation_bar_view.dart';
 import 'package:fluffypawuser/views/home_screen/layouts/home_layout.dart';
+import 'package:fluffypawuser/views/pet/add_vaccine_view.dart';
 import 'package:fluffypawuser/views/pet/create_pet_view.dart';
 import 'package:fluffypawuser/views/pet/pet_detail_view.dart';
 import 'package:fluffypawuser/views/pet/pet_list_view.dart';
 import 'package:fluffypawuser/views/pet/pet_type_view.dart';
+import 'package:fluffypawuser/views/pet/vaccine_detail_view.dart';
 import 'package:fluffypawuser/views/splash_screen/splash_view.dart';
 import 'package:fluffypawuser/views/store/choose_pet_for_booking_view.dart';
 import 'package:fluffypawuser/views/store/layouts/choose_pet_for_booking_layout.dart';
@@ -26,6 +28,8 @@ class Routes{
   static const storeListByService ="/storeListByService";
   static const storeDetail ="/storeDetail";
   static const choosePetForBooking ="/choosePetForBooking";
+  static const addVaccine ="/addVaccine";
+  static const vaccineDetail ="/vaccineDetail";
   
 }
 Route generatedRoutes(RouteSettings settings){
@@ -52,6 +56,14 @@ Route generatedRoutes(RouteSettings settings){
       final id = settings.arguments as int;
       child = CreatePetView(id: id);
       break;
+    case Routes.addVaccine:
+      final id = settings.arguments as int;
+      child = AddVaccineView(id: id);
+      break;
+    case Routes.vaccineDetail:
+      final id = settings.arguments as int;
+      child = VaccineDetailView(id: id);
+      break; 
     case Routes.storeDetail:
       final id = settings.arguments as int;
       child = StoreDetailView(serviceTypeId: id);

@@ -10,6 +10,7 @@ abstract class StoreProvider {
   Future<Response> getStoreServiceByStoreId(int storeId);
   Future<Response> getStoreById(int storeId);
   Future<Response> getServiceTime(int serviceStoreId);
+  Future<Response> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description);
 
 
 }
@@ -53,6 +54,19 @@ class StoreServiceProvider implements StoreProvider {
   @override
   Future<Response> getServiceTime(int serviceStoreId) {
     final response = ref.read(apiClientProvider).get('${AppConstants.getAllStoreServiceByServiceId}/$serviceStoreId');
+    return response;
+  }
+  @override
+  Future<Response> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description) async {
+    final response = await ref.read(apiClientProvider).post(
+      AppConstants.createBooking,
+      data: {
+        "petId": petIds,
+        "storeServiceId": storeServiceId,
+        "paymentMethod": paymentMethod,
+        "description": description
+      },
+    );
     return response;
   }
 
