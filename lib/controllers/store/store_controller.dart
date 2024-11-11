@@ -1,4 +1,5 @@
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
+import 'package:fluffypawuser/models/booking/booking_model.dart';
 import 'package:fluffypawuser/models/pet/service_type_model.dart';
 import 'package:fluffypawuser/models/store/service_time_model.dart';
 import 'package:fluffypawuser/models/store/store_model.dart';
@@ -20,6 +21,9 @@ class StoreController extends StateNotifier<bool> {
   List<StoreServiceModel>? get storeServices => _storeServices;
   List<ServiceTimeModel>? _serviceTime;
   List<ServiceTimeModel>? get serviceTime => _serviceTime;
+  List<BookingModel>? _bookings;
+  List<BookingModel>? get bookings => _bookings;
+
 
   final Ref ref;
   StoreController(this.ref) : super(false);
@@ -100,6 +104,47 @@ class StoreController extends StateNotifier<bool> {
       rethrow;
     }
   }
+  Future<void> getAllBookings() async {
+    if (!mounted) return;
+
+    try {
+      state = true;
+      final response = await ref.read(storeServiceProvider).getAllBooking();
+
+      if (!mounted) return;
+
+      if (response.data['data'] != null) {
+        final List<dynamic> bookingList = response.data['data'];
+        _bookings = bookingList
+            .map((booking) => BookingModel.fromMap(Map<String, dynamic>.from(booking)))
+            .toList();
+
+        // Sort bookings by create date (newest first)
+        _bookings?.sort((a, b) => b.createDate.compareTo(a.createDate));
+
+        // Debug log
+        debugPrint('Loaded ${_bookings?.length} bookings');
+        _bookings?.forEach((booking) {
+          debugPrint(
+            'Booking ID: ${booking.id}, '
+            'Service: ${booking.serviceName}, '
+            'Store: ${booking.storeName}, '
+            'Status: ${booking.status}, '
+            'Date: ${booking.createDate}'
+          );
+        });
+      } else {
+        _bookings = [];
+        debugPrint('No bookings found');
+      }
+
+      if (mounted) state = false;
+    } catch (e) {
+      debugPrint('Error getting all bookings: $e');
+      if (mounted) state = false;
+      rethrow;
+    }
+  }
   Future<void> getStoreById(int storeId) async {
     if (!mounted) return;
     
@@ -165,24 +210,49 @@ class StoreController extends StateNotifier<bool> {
       rethrow;
     }
   }
-  Future<void> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description) async {
+  Future<Map<String, dynamic>> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description) async {
     try {
       state = true;
-      final response = await ref.read(storeServiceProvider).createBooking(storeServiceId, petIds, paymentMethod, description);
+      final response = await ref.read(storeServiceProvider).createBooking(
+        storeServiceId, 
+        petIds, 
+        paymentMethod, 
+        description
+      );
 
-      if (response.statusCode == 200) {
-        debugPrint('Booking created successfully');
-      } else {
-        debugPrint('Failed to create booking: ${response.statusMessage}');
+      debugPrint('Response Status Code: ${response.statusCode}');
+      debugPrint('Response Data: ${response.data}');
+
+      if (response.statusCode != 200) {
+        // Extract error message from response
+        String errorMessage = 'Đã có lỗi xảy ra';
+        if (response.data != null && response.data['message'] != null) {
+          errorMessage = response.data['message'];
+        }
+        
+        state = false;
+        return {
+          'success': false,
+          'message': errorMessage,
+        };
       }
 
+      // Success case
       state = false;
+      return {
+        'success': true,
+        'message': 'Đặt lịch thành công',
+      };
+
     } catch (e) {
-      state = false;
       debugPrint('Error creating booking: ${e.toString()}');
-      rethrow;
+      state = false;
+      return {
+        'success': false,
+        'message': 'Đã có lỗi xảy ra: ${e.toString()}',
+      };
     }
-  }
+}
 }
 
 final storeController = StateNotifierProvider<StoreController, bool>(

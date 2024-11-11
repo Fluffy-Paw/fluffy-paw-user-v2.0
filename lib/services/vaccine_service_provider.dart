@@ -13,6 +13,11 @@ abstract class VaccineProvider {
   Future<Response> getVaccineDetail(int vaccineId);
   Future<Response> addVaccineForPet(
       {required VaccineRequest request, required File vaccineImage});
+  Future<Response> updateVaccineForPet({
+    required FormData formData,
+    required int vaccineId,
+  });
+  Future<Response> deleteVaccine(int vaccineId);
 }
 
 class VaccineServiceProvider implements VaccineProvider {
@@ -78,6 +83,43 @@ class VaccineServiceProvider implements VaccineProvider {
       debugPrint('Error in addVaccineForPet: $e');
       rethrow;
     }
+  }
+  @override
+  Future<Response> updateVaccineForPet({
+    required FormData formData,
+    required int vaccineId,
+  }) async {
+    try {
+      // Get token from Hive
+      final authBox = await Hive.openBox(AppConstants.appSettingsBox);
+      final String? token = authBox.get(AppConstants.authToken);
+
+      if (token == null) {
+        throw Exception('Authentication token not found');
+      }
+
+      final response = await ref.read(apiClientProvider).patch(
+        '${AppConstants.updateVaccine}/$vaccineId',
+        data: formData,
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'multipart/form-data',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return response;
+    } catch (e) {
+      debugPrint('Error in updateVaccineForPet service: $e');
+      rethrow;
+    }
+  }
+  
+  @override
+  Future<Response> deleteVaccine(int vaccineId) {
+    // TODO: implement deleteVaccine
+    final response = ref.read(apiClientProvider).delete('${AppConstants.deleteVaccine}/$vaccineId');
+    return response;
   }
 }
 

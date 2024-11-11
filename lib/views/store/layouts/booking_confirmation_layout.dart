@@ -2,11 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
+import 'package:fluffypawuser/controllers/misc/misc_provider.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/pet/pet_model.dart';
 import 'package:fluffypawuser/models/store/service_time_model.dart';
 import 'package:fluffypawuser/models/store/store_service_model.dart';
+import 'package:fluffypawuser/routes.dart';
+import 'package:fluffypawuser/views/bottom_navigation_bar/layouts/bottom_navigation_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -48,7 +51,9 @@ class _BookingConfirmationLayoutState
 
   Future<void> _loadData() async {
     // Load pet details
-    await ref.read(petController.notifier).getPetList(); // Đợi getPetList hoàn thành
+    await ref
+        .read(petController.notifier)
+        .getPetList(); // Đợi getPetList hoàn thành
     if (mounted) {
       final allPets = ref.read(hiveStoreService).getPetInfo() ?? [];
       setState(() {
@@ -65,8 +70,8 @@ class _BookingConfirmationLayoutState
     if (mounted) {
       final allTimeSlots = ref.read(storeController.notifier).serviceTime ?? [];
       setState(() {
-        timeSlot = allTimeSlots
-            .firstWhere((slot) => slot.id == widget.timeSlotId);
+        timeSlot =
+            allTimeSlots.firstWhere((slot) => slot.id == widget.timeSlotId);
       });
     }
 
@@ -93,9 +98,9 @@ class _BookingConfirmationLayoutState
         title: Text(
           'Xác nhận đặt lịch',
           style: AppTextStyle(context).title.copyWith(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.bold,
-          ),
+                fontSize: 20.sp,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, size: 20.sp),
@@ -156,9 +161,9 @@ class _BookingConfirmationLayoutState
         Text(
           title,
           style: AppTextStyle(context).title.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         Gap(12.h),
         child,
@@ -190,16 +195,16 @@ class _BookingConfirmationLayoutState
           Text(
             service!.name,
             style: AppTextStyle(context).subTitle.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           Gap(8.h),
           Text(
             'Giá: \$${service!.cost}',
             style: AppTextStyle(context).bodyText.copyWith(
-              color: AppColor.violetColor,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: AppColor.violetColor,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),
@@ -254,14 +259,14 @@ class _BookingConfirmationLayoutState
                 Text(
                   pet.name,
                   style: AppTextStyle(context).subTitle.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 Text(
                   '${pet.weight} kg',
                   style: AppTextStyle(context).bodyTextSmall.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                        color: Colors.grey[600],
+                      ),
                 ),
               ],
             ),
@@ -293,8 +298,8 @@ class _BookingConfirmationLayoutState
       child: Text(
         formatter.format(timeSlot!.startTime),
         style: AppTextStyle(context).bodyText.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }
@@ -340,7 +345,8 @@ class _BookingConfirmationLayoutState
             value: value,
             groupValue: selectedPaymentMethod,
             activeColor: AppColor.violetColor,
-            onChanged: (value) => setState(() => selectedPaymentMethod = value!),
+            onChanged: (value) =>
+                setState(() => selectedPaymentMethod = value!),
           ),
           Gap(8.w),
           Icon(icon, color: AppColor.violetColor),
@@ -352,8 +358,8 @@ class _BookingConfirmationLayoutState
                 Text(
                   title,
                   style: AppTextStyle(context).bodyText.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ],
             ),
@@ -399,94 +405,143 @@ class _BookingConfirmationLayoutState
   }
 
   Widget _buildBottomBar() {
-  // Convert service cost từ num sang double
-  double totalCost = (service?.cost ?? 0).toDouble();
-  totalCost *= selectedPets.length;
+    double totalCost = (service?.cost ?? 0).toDouble();
+    totalCost *= selectedPets.length;
 
-  return Container(
-    padding: EdgeInsets.all(20.w),
-    decoration: BoxDecoration(
-      color: AppColor.whiteColor,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: Offset(0, -5),
-        ),
-      ],
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Tổng tiền:',
-              style: AppTextStyle(context).subTitle.copyWith(
-                fontWeight: FontWeight.w600,
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: AppColor.whiteColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Tổng tiền:',
+                style: AppTextStyle(context).subTitle.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
-            ),
-            Text(
-              '\$${totalCost.toStringAsFixed(2)}',
-              style: AppTextStyle(context).title.copyWith(
-                color: AppColor.violetColor,
-                fontWeight: FontWeight.bold,
+              Text(
+                '${NumberFormat('#,###', 'vi_VN').format(totalCost)}đ',
+                style: AppTextStyle(context).title.copyWith(
+                      color: AppColor.violetColor,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
-            ),
-          ],
-        ),
-        Gap(16.h),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () async {
-              try {
-                // Show loading indicator
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-
-                // Create booking using the store controller
-                await ref.read(storeController.notifier).createBooking(
-                  widget.timeSlotId, // Using timeSlotId as storeServiceId
-                  widget.selectedPetIds,
-                  selectedPaymentMethod,
-                  descriptionController.text,
-                );
-
-                // Hide loading indicator
-                Navigator.pop(context);
-
-                // Navigate back to previous screen
-                Navigator.pop(context);
-              } catch (e) {
-                // Hide loading indicator
-                Navigator.pop(context);
-                debugPrint('Error creating booking: $e');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.violetColor,
-              padding: EdgeInsets.symmetric(vertical: 16.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+            ],
+          ),
+          Gap(16.h),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => _handleBooking(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.violetColor,
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
               ),
-            ),
-            child: Text(
-              'Xác nhận đặt lịch',
-              style: AppTextStyle(context).buttonText,
+              child: Text(
+                'Xác nhận đặt lịch',
+                style: AppTextStyle(context).buttonText,
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+   Future<void> _handleBooking() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: const CircularProgressIndicator(),
+          ),
         ),
-      ],
-    ),
-  );
-}
+      );
+
+      // Attempt to create booking
+      final result = await ref.read(storeController.notifier).createBooking(
+        widget.timeSlotId,
+        widget.selectedPetIds,
+        selectedPaymentMethod,
+        descriptionController.text,
+      );
+
+      // Hide loading indicator
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Only navigate if booking was successful
+      if (result['success']) {
+        if (mounted) {
+          ref.read(selectedIndexProvider.notifier).state = 1;
+          ref.read(hasNewBookingProvider.notifier).state = true;
+
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            Routes.core,
+            (route) => false,
+          );
+        }
+      }
+
+    } catch (error) {
+      // Hide loading indicator if still showing
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error.toString().replaceAll('Exception: ', ''),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14.sp,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(20.w),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Đóng',
+              textColor: Colors.white,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
 
   @override
   void dispose() {

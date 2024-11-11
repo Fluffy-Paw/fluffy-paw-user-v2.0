@@ -1,9 +1,11 @@
 import 'package:fluffypawuser/controllers/misc/misc_provider.dart';
 import 'package:fluffypawuser/gen/assets.gen.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
+import 'package:fluffypawuser/views/booking/booking_history_view.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/components/app_bottom_navbar.dart';
 import 'package:fluffypawuser/views/home_screen/home_view.dart';
 import 'package:fluffypawuser/views/profile/profile_view.dart';
+import 'package:fluffypawuser/views/wallet/wallet_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,15 +29,28 @@ class BottomNavigationLayout extends ConsumerStatefulWidget {
 
 class _BottomNavigationLayoutState
     extends ConsumerState<BottomNavigationLayout> {
+      late PageController pageController;
+      @override
+  void initState() {
+    super.initState();
+    // Initialize with current selected index
+    final initialIndex = ref.read(selectedIndexProvider);
+    pageController = PageController(initialPage: initialIndex);
+  }
   @override
   Widget build(BuildContext context) {
-    final pageController = ref.watch(bottomTabControllerProvider);
+    final selectedIndex = ref.watch(selectedIndexProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (pageController.page?.round() != selectedIndex) {
+        pageController.jumpToPage(selectedIndex);
+      }
+    });
     return Scaffold(
       bottomNavigationBar: AppBottomNavbar(
         bottomItem: getBottomItems(context: context),
         onSelect: (index) {
           if (index != null) {
-            pageController.jumpToPage(index);
+            ref.read(selectedIndexProvider.notifier).state = index;
           }
         },
       ),
@@ -43,12 +58,14 @@ class _BottomNavigationLayoutState
         physics: const NeverScrollableScrollPhysics(),
         controller: pageController,
         onPageChanged: (index) {
-          ref.watch(selectedIndexProvider.notifier).state = index;
+          if (ref.read(selectedIndexProvider) != index) {
+            ref.read(selectedIndexProvider.notifier).state = index;
+          }
         },
         children: const [
           HomeView(),
-          ProfileView(),
-          ProfileView(),
+          BookingHistoryView(),
+          WalletView(),
           ProfileView(),
           ProfileView(),
         ],

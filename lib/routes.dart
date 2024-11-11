@@ -1,4 +1,5 @@
 import 'package:fluffypawuser/views/authentication/login_view.dart';
+import 'package:fluffypawuser/views/booking/components/booking_history_layout.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/bottom_navigation_bar_view.dart';
 import 'package:fluffypawuser/views/home_screen/layouts/home_layout.dart';
 import 'package:fluffypawuser/views/pet/add_vaccine_view.dart';
@@ -13,6 +14,9 @@ import 'package:fluffypawuser/views/store/layouts/choose_pet_for_booking_layout.
 import 'package:fluffypawuser/views/store/layouts/store_list_by_service_layout.dart';
 import 'package:fluffypawuser/views/store/store_detail_view.dart';
 import 'package:fluffypawuser/views/store/store_list_view.dart';
+import 'package:fluffypawuser/views/wallet/top_up_view.dart';
+import 'package:fluffypawuser/views/wallet/wallet_view.dart';
+import 'package:fluffypawuser/views/wallet/withdraw_view.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -30,6 +34,10 @@ class Routes{
   static const choosePetForBooking ="/choosePetForBooking";
   static const addVaccine ="/addVaccine";
   static const vaccineDetail ="/vaccineDetail";
+  static const wallet="/wallet";
+  static const topUp="/topUp";
+  static const withdraw="/withdraw";
+  static const bookingHistory="/bookingHistory";
   
 }
 Route generatedRoutes(RouteSettings settings){
@@ -44,6 +52,18 @@ Route generatedRoutes(RouteSettings settings){
       break;
     case Routes.selectPetType:
       child = const PetTypeView();
+      break;
+    case Routes.wallet:
+      child = const WalletView();
+      break;
+    case Routes.withdraw:
+      child = const WithdrawView();
+      break;
+    case Routes.bookingHistory:
+      child = const BookingHistoryLayout();
+      break;
+    case Routes.topUp:
+      child = const TopUpView();
       break;
     case Routes.petList:
       child = const PetListView();

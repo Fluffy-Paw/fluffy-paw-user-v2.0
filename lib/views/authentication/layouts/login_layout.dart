@@ -24,6 +24,7 @@ class LoginLayout extends ConsumerStatefulWidget {
   @override
   ConsumerState<LoginLayout> createState() => _LoginLayoutState();
 }
+
 class _LoginLayoutState extends ConsumerState<LoginLayout> {
   final List<FocusNode> fNodes = [FocusNode(), FocusNode()];
 
@@ -48,17 +49,17 @@ class _LoginLayoutState extends ConsumerState<LoginLayout> {
                   TextSpan(
                     text: S.of(context).no_account,
                     style: AppTextStyle(context).bodyText.copyWith(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 14.sp,
-                    ),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 14.sp,
+                        ),
                   ),
                   TextSpan(
                     text: S.of(context).register,
                     style: AppTextStyle(context).bodyText.copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: colors(context).primaryColor,
-                      fontSize: 14.sp,
-                    ),
+                          fontWeight: FontWeight.w400,
+                          color: colors(context).primaryColor,
+                          fontSize: 14.sp,
+                        ),
                     // recognizer: TapGestureRecognizer()
                     //   ..onTap = () => context.nav.pushNamed(Routes.signUp),
                   ),
@@ -115,7 +116,7 @@ class _LoginLayoutState extends ConsumerState<LoginLayout> {
                     splashColor: Colors.transparent,
                     onPressed: () {
                       ref.read(obscureText1.notifier).state =
-                      !ref.read(obscureText1.notifier).state;
+                          !ref.read(obscureText1.notifier).state;
                     },
                     icon: Icon(
                       !ref.read(obscureText1.notifier).state
@@ -132,37 +133,38 @@ class _LoginLayoutState extends ConsumerState<LoginLayout> {
                 Gap(50.h),
                 ref.watch(authController)
                     ? const Align(
-                    alignment: Alignment.center,
-                    child: CircularProgressIndicator())
-                    :
-                CustomButton(
-                  buttonText: S.of(context).log_in,
-                  onPressed: () {
-                    FocusScope.of(context).unfocus();
-                    if (formKey.currentState!.validate()) {
-                      ref
-                          .read(authController.notifier)
-                          .login(
-                        contact: contactController.text,
-                        password: passwordController.text,
+                        alignment: Alignment.center,
+                        child: CircularProgressIndicator())
+                    : CustomButton(
+                        buttonText: S.of(context).log_in,
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          if (formKey.currentState!.validate()) {
+                            ref
+                                .read(authController.notifier)
+                                .login(
+                                  contact: contactController.text,
+                                  password: passwordController.text,
+                                )
+                                .then((isSuccess) {
+                              if (isSuccess) {
+                                ref.read(selectedIndexProvider.notifier).state =
+                                    0;
+
+                                // Navigate to bottom navigation layout and remove all previous routes
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const BottomNavigationLayout(),
+                                  ),
+                                  (route) => false,
+                                );
+                              }
+                            });
+                          }
+                        },
                       )
-                          .then((isSuccess) {
-                        if (isSuccess) {
-                          ref.read(selectedIndexProvider.notifier).state = 0;
-    
-    // Navigate to bottom navigation layout and remove all previous routes
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const BottomNavigationLayout(),
-      ),
-      (route) => false,
-    );
-                        }
-                      });
-                    }
-                  },
-                )
               ],
             ),
           ),
@@ -170,5 +172,4 @@ class _LoginLayoutState extends ConsumerState<LoginLayout> {
       ),
     );
   }
-
 }

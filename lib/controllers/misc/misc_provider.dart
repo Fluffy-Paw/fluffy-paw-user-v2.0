@@ -11,6 +11,7 @@ final selectedIndexProvider = StateProvider<int>((ref) => 0);
 final selectedGender = StateProvider<String>((ref) => '');
 final selectedPetType = StateProvider<int?>((ref) => null);
 final selectedBehaviorCategory = StateProvider<int?>((ref) => null);
+final hasNewBookingProvider = StateProvider<bool>((ref) => false);
 final bottomTabControllerProvider =
 Provider<PageController>((ref) => PageController());
 final firstNameProvider = Provider<TextEditingController>((ref) {

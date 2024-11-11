@@ -67,6 +67,15 @@ List<BehaviorCategory>? get behaviorCategories => _behaviorCategories;
     state = false;
   }
 }
+Future<void> deletePet(int petId) async{
+  try {
+    state = true;
+    final response = await ref.read(petServiceProvider).deletePet(petId);
+    
+  } catch (e) {
+    debugPrint(e.toString());
+  }
+}
 Future<CommonResponse> addPet({
     required PetRequest petRequest,
     required File profile,

@@ -11,6 +11,7 @@ abstract class StoreProvider {
   Future<Response> getStoreById(int storeId);
   Future<Response> getServiceTime(int serviceStoreId);
   Future<Response> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description);
+  Future<Response> getAllBooking();
 
 
 }
@@ -67,6 +68,13 @@ class StoreServiceProvider implements StoreProvider {
         "description": description
       },
     );
+    return response;
+  }
+  @override
+  Future<Response> getAllBooking() {
+    final response = ref
+        .read(apiClientProvider)
+        .get(AppConstants.getAllBooking);
     return response;
   }
 

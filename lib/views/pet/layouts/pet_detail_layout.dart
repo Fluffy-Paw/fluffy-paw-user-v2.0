@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:fluffypawuser/components/confirmation_dialog.dart';
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/config/theme.dart';
@@ -56,6 +57,10 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
               style: AppTextStyle(context).bodyTextSmall.copyWith(
                   color: AppColor.processing, fontWeight: FontWeight.w500),
             ),
+          ),
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.red),
+            onPressed: _showDeleteConfirmation,
           ),
         ],
       ),
@@ -635,6 +640,31 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
           ),
         ),
       ),
+    );
+  }
+  Future<void> _showDeleteConfirmation() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ConfirmationDialog(
+          isLoading: ref.watch(petController),
+          text: 'Are you sure you want to delete this pet?',
+          image: Image.asset(Assets.image.question.path),
+          cancelTapAction: () => Navigator.of(context).pop(),
+          applyTapAction: () async {
+            await ref.read(petController.notifier).deletePet(widget.petId);
+            if (mounted) {
+              Navigator.of(context).pop(); // Close dialog
+              // Pop until we reach the list screen
+              Navigator.of(context).popUntil(
+                (route) => route.settings.name == Routes.petList,
+              );
+              // Refresh the pet list
+              ref.read(petController.notifier).getPetList();
+            }
+          },
+        );
+      },
     );
   }
 }

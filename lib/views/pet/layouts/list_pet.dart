@@ -136,7 +136,7 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
                     ),
                   ),
                   onPressed: () {
-                    context.nav.pushNamed(Routes.createPet);
+                    context.nav.pushNamed(Routes.selectPetType);
                   },
                   child: const Center(
                     child: Icon(

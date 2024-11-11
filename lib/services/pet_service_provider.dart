@@ -17,6 +17,7 @@ abstract class PetProvider {
   Future<Response> getPetTypeList(int id);
   Future<Response> updatePet(
       {required PetRequest request, required File profile, required int id});
+  Future<Response> deletePet(int petId);
 }
 
 class PetServiceProvider implements PetProvider {
@@ -170,6 +171,12 @@ class PetServiceProvider implements PetProvider {
       debugPrint('Error in updatePet: $e');
       rethrow;
     }
+  }
+  
+  @override
+  Future<Response> deletePet(int petId) {
+    final response = ref.read(apiClientProvider).delete('${AppConstants.deletePet}/$petId');
+    return response;
   }
 }
 

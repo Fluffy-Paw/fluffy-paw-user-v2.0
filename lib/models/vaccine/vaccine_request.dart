@@ -10,6 +10,7 @@ class VaccineRequest {
   final String vaccineDate;
   final String nextVaccineDate;
   final String description;
+  
 
   VaccineRequest({
     required this.petId,

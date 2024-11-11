@@ -3,6 +3,7 @@ import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/vaccine/vaccine_controller.dart';
 import 'package:fluffypawuser/models/vaccine/vaccine_detail_model.dart';
+import 'package:fluffypawuser/views/pet/layouts/update_vaccine_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,6 +24,7 @@ class VaccineDetailLayout extends ConsumerStatefulWidget {
 }
 
 class _VaccineDetailLayoutState extends ConsumerState<VaccineDetailLayout> {
+  BuildContext? _dialogContext;
   @override
   void initState() {
     super.initState();
@@ -33,6 +35,7 @@ class _VaccineDetailLayoutState extends ConsumerState<VaccineDetailLayout> {
 
   @override
   Widget build(BuildContext context) {
+    
     final bool isDark =
         Theme.of(context).scaffoldBackgroundColor == AppColor.blackColor;
 
@@ -48,6 +51,41 @@ class _VaccineDetailLayoutState extends ConsumerState<VaccineDetailLayout> {
                 fontWeight: FontWeight.w600,
               ),
         ),
+        actions: [
+          // Edit button
+          IconButton(
+            onPressed: () => _navigateToUpdate(context),
+            icon: Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: AppColor.violetColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(
+                Icons.edit_outlined,
+                color: AppColor.violetColor,
+                size: 20.sp,
+              ),
+            ),
+          ),
+          // Delete button
+          IconButton(
+            onPressed: () => _showDeleteConfirmation(context),
+            icon: Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 20.sp,
+              ),
+            ),
+          ),
+          Gap(16.w),
+        ],
       ),
       body: Consumer(
         builder: (context, ref, _) {
@@ -107,7 +145,8 @@ class _VaccineDetailLayoutState extends ConsumerState<VaccineDetailLayout> {
           fit: StackFit.expand,
           children: [
             CachedNetworkImage(
-              imageUrl: vaccine.image ?? 'https://storage-vnportal.vnpt.vn/btn-ubnd/sitefolders/ubnden/nam2021/thang9/h7.jpg',
+              imageUrl: vaccine.image ??
+                  'https://storage-vnportal.vnpt.vn/btn-ubnd/sitefolders/ubnden/nam2021/thang9/h7.jpg',
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
                 color: Colors.grey[200],
@@ -265,12 +304,12 @@ class _VaccineDetailLayoutState extends ConsumerState<VaccineDetailLayout> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Description',
-            style: AppTextStyle(context).subTitle.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
+          // Text(
+          //   'Description',
+          //   style: AppTextStyle(context).subTitle.copyWith(
+          //         fontWeight: FontWeight.w600,
+          //       ),
+          // ),
           Gap(8.h),
           Text(
             'Description',
@@ -395,9 +434,9 @@ class _VaccineDetailLayoutState extends ConsumerState<VaccineDetailLayout> {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'completed':
+      case 'Complete':
         return Colors.green;
-      case 'pending':
+      case 'Incomplete':
         return Colors.orange;
       case 'expired':
         return Colors.red;
@@ -405,4 +444,208 @@ class _VaccineDetailLayoutState extends ConsumerState<VaccineDetailLayout> {
         return Colors.grey;
     }
   }
+
+  void _navigateToUpdate(BuildContext context) {
+    final vaccineDetail = ref.read(vaccineController.notifier).vaccineDetail;
+    if (vaccineDetail != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UpdateVaccineLayout(
+            vaccineDetail: vaccineDetail,
+          ),
+        ),
+      ).then((_) {
+        // Refresh vaccine details after update
+        ref.read(vaccineController.notifier).getVaccineDetail(widget.vaccineId);
+      });
+    }
+  }
+
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 32.sp,
+                ),
+              ),
+              Gap(16.h),
+              Text(
+                'Delete Vaccine',
+                style: AppTextStyle(context).title.copyWith(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              Gap(8.h),
+              Text(
+                'Are you sure you want to delete this vaccine record? This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: AppTextStyle(context).bodyText.copyWith(
+                      color: Colors.grey[600],
+                    ),
+              ),
+              Gap(24.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: AppTextStyle(context).bodyText.copyWith(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ),
+                  Gap(12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _deleteVaccine(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: AppTextStyle(context).bodyText.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteVaccine(BuildContext context) async {
+    try {
+      // Close confirmation dialog
+      Navigator.of(context).pop();
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          _dialogContext = context;  // Store dialog context
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColor.violetColor),
+                    ),
+                    Gap(16.h),
+                    Text(
+                      'Deleting vaccine...',
+                      style: AppTextStyle(context).bodyText,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+      // Call delete API
+      final success = await ref.read(vaccineController.notifier).deleteVaccine(widget.vaccineId);
+
+      // Close loading dialog
+      if (_dialogContext != null && mounted) {
+        Navigator.of(_dialogContext!).pop();
+      }
+
+      if (success && mounted) {
+        // Navigate back to previous screen
+        Navigator.of(context).pop();
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Vaccine deleted successfully'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete vaccine'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if it's open
+      if (_dialogContext != null && mounted) {
+        Navigator.of(_dialogContext!).pop();
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred while deleting the vaccine'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      debugPrint('Error deleting vaccine: $e');
+    } finally {
+      // Clear dialog context
+      _dialogContext = null;
+    }
+  }
+
 }
