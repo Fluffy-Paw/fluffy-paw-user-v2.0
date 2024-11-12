@@ -5,6 +5,7 @@ import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/store/store_model.dart';
 import 'package:fluffypawuser/models/store/store_service_model.dart';
 import 'package:fluffypawuser/views/store/choose_pet_for_booking_view.dart';
+import 'package:fluffypawuser/views/store/layouts/booking_time_selection_layout.dart';
 import 'package:fluffypawuser/views/store/layouts/choose_pet_for_booking_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +25,7 @@ class StoreDetailLayout extends ConsumerStatefulWidget {
 }
 
 class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
-  int? selectedServiceId;
+  StoreServiceModel? selectedService;
 
   @override
   void initState() {
@@ -243,7 +244,9 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
   }
 
   Widget _buildServiceCard(StoreServiceModel service) {
-    final isSelected = selectedServiceId == service.id;
+    final isSelected = selectedService?.id == service.id;
+    final isHotelService = service.serviceTypeName.toLowerCase().contains('hotel') || 
+                          service.serviceTypeName.toLowerCase().contains('phòng');
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -263,7 +266,7 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
         ],
       ),
       child: InkWell(
-        onTap: () => setState(() => selectedServiceId = service.id),
+        onTap: () => setState(() => selectedService = service),
         borderRadius: BorderRadius.circular(12.r),
         child: Padding(
           padding: EdgeInsets.all(16.w),
@@ -277,18 +280,43 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          service.name,
-                          style: AppTextStyle(context).subTitle.copyWith(
-                                fontWeight: FontWeight.w600,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                service.name,
+                                style: AppTextStyle(context).subTitle.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
+                            ),
+                            if (isHotelService)
+                              Container(
+                                margin: EdgeInsets.only(left: 8.w),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColor.violetColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Text(
+                                  'Hotel',
+                                  style: AppTextStyle(context).bodyTextSmall.copyWith(
+                                    color: AppColor.violetColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         Gap(4.h),
                         Text(
                           service.serviceTypeName,
                           style: AppTextStyle(context).bodyTextSmall.copyWith(
-                                color: AppColor.blackColor.withOpacity(0.6),
-                              ),
+                            color: AppColor.blackColor.withOpacity(0.6),
+                          ),
                         ),
                       ],
                     ),
@@ -296,9 +324,9 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
                   Text(
                     '\$${service.cost}',
                     style: AppTextStyle(context).title.copyWith(
-                          color: AppColor.violetColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColor.violetColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -310,8 +338,8 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
                   Text(
                     service.duration,
                     style: AppTextStyle(context).bodyTextSmall.copyWith(
-                          color: Colors.grey,
-                        ),
+                      color: Colors.grey,
+                    ),
                   ),
                   Gap(16.w),
                   Icon(Icons.star, size: 16.sp, color: Colors.amber),
@@ -319,8 +347,8 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
                   Text(
                     service.totalRating.toString(),
                     style: AppTextStyle(context).bodyTextSmall.copyWith(
-                          color: Colors.grey,
-                        ),
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
@@ -445,80 +473,84 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
   }
 
   Widget _buildBottomBar() {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: AppColor.whiteColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: selectedServiceId != null
-                  ? () {
+  final isHotelService = selectedService?.serviceTypeName.toLowerCase().contains('hotel') == true || 
+                        selectedService?.serviceTypeName.toLowerCase().contains('phòng') == true;
+
+  return Container(
+    padding: EdgeInsets.all(20.w),
+    decoration: BoxDecoration(
+      color: AppColor.whiteColor,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: Offset(0, -5),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: selectedService != null
+                ? () {
+                    if (isHotelService) {
+                      // Chuyển sang booking time với service ID và giá
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingTimeSelectionLayout(
+                            storeServiceId: selectedService!.id,
+                            price: selectedService!.cost.toDouble(), // Truyền giá service
+                          ),
+                        ),
+                      );
+                    } else {
+                      // Dịch vụ thông thường
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChoosePetForBookingView(
-                              serviceTypeId: selectedServiceId!),
+                            serviceTypeId: selectedService!.id,
+                          ),
                         ),
                       );
                     }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.violetColor,
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                disabledBackgroundColor: AppColor.violetColor.withOpacity(0.5),
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.violetColor,
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text(
-                'Đặt lịch',
-                style: AppTextStyle(context).buttonText,
-              ),
+              disabledBackgroundColor: AppColor.violetColor.withOpacity(0.5),
+            ),
+            child: Text(
+              isHotelService ? 'Đặt phòng' : 'Đặt dịch vụ',
+              style: AppTextStyle(context).buttonText,
             ),
           ),
-          Gap(16.w),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColor.violetColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.chat,
-                color: AppColor.violetColor,
-                size: 24.sp,
-              ),
-              onPressed: () {
-                if (selectedServiceId != null) {
-                  // Chuyển trang sang CreatePetLayout với tham số petType
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChoosePetForBookingView(
-                          serviceTypeId: selectedServiceId!),
-                    ),
-                  );
-                } else {
-                  // Hiển thị thông báo nếu người dùng chưa chọn loại pet
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Vui lòng chọn thú cưng')),
-                  );
-                }
-              },
-            ),
+        ),
+        Gap(16.w),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColor.violetColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12.r),
           ),
-        ],
-      ),
-    );
-  }
+          child: IconButton(
+            icon: Icon(
+              Icons.chat,
+              color: AppColor.violetColor,
+              size: 24.sp,
+            ),
+            onPressed: () {
+              // Xử lý chức năng chat
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

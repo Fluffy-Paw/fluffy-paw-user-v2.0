@@ -12,20 +12,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class PetController extends StateNotifier<bool> {
   final Ref ref;
   PetDetail? _petDetail;
-  PetDetail? get petDetail => _petDetail;  
+  PetDetail? get petDetail => _petDetail;
   List<PetType>? _petTypes;
-
-  List<PetType>? get petTypes => _petTypes; 
+  List<PetModel>? _pets;
+  List<PetModel>? get pets => _pets;
+  List<PetType>? get petTypes => _petTypes;
   List<BehaviorCategory>? _behaviorCategories;
-List<BehaviorCategory>? get behaviorCategories => _behaviorCategories;
+  List<BehaviorCategory>? get behaviorCategories => _behaviorCategories;
   PetController(this.ref) : super(false);
   Future<void> getPetList() async {
     try {
       state = true;
       final response = await ref.read(petServiceProvider).getPetList();
-      final List<PetModel> pets = PetModel.fromMapList(response.data['data']);
-      await ref.read(hiveStoreService).savePetInfo(pets: pets);
-      
+      _pets = PetModel.fromMapList(response.data['data']);
+      //await ref.read(hiveStoreService).savePetInfo(pets: pets);
+
       state = false;
     } catch (e) {
       state = false;
@@ -33,50 +34,55 @@ List<BehaviorCategory>? get behaviorCategories => _behaviorCategories;
       rethrow;
     }
   }
+
   Future<void> getPetDetail(int id) async {
     try {
       state = true;
       final response = await ref.read(petServiceProvider).getPetDetail(id);
       _petDetail = PetDetail.fromMap(response.data['data']);
-      state = false;  // Changed from true to false
+      state = false; // Changed from true to false
     } catch (e) {
       state = false;
       debugPrint(e.toString());
     }
   }
+
   Future<void> getPetBehavior() async {
-  try {
-    state = true;
-    final response = await ref.read(petServiceProvider).getBehaviorCategory();
-    List<BehaviorCategory> newBehaviorCategory = 
-        (response.data['data'] as List)
-        .map((item) => BehaviorCategory.fromMap(item))
-        .toList();
-        
-    // Cập nhật _behaviorCategories
-    _behaviorCategories = newBehaviorCategory;
-    
-    final hiveService = ref.read(hiveStoreService);
-    List<BehaviorCategory>? currentBehaviorCategory = await hiveService.getPetBehavior();
-    if (currentBehaviorCategory == null || currentBehaviorCategory != newBehaviorCategory) {
-      await hiveService.savePetBehavior(pets: newBehaviorCategory);
+    try {
+      state = true;
+      final response = await ref.read(petServiceProvider).getBehaviorCategory();
+      List<BehaviorCategory> newBehaviorCategory =
+          (response.data['data'] as List)
+              .map((item) => BehaviorCategory.fromMap(item))
+              .toList();
+
+      // Cập nhật _behaviorCategories
+      _behaviorCategories = newBehaviorCategory;
+
+      final hiveService = ref.read(hiveStoreService);
+      List<BehaviorCategory>? currentBehaviorCategory =
+          await hiveService.getPetBehavior();
+      if (currentBehaviorCategory == null ||
+          currentBehaviorCategory != newBehaviorCategory) {
+        await hiveService.savePetBehavior(pets: newBehaviorCategory);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      state = false;
     }
-  } catch (e) {
-    debugPrint(e.toString());
-  } finally {
-    state = false;
   }
-}
-Future<void> deletePet(int petId) async{
-  try {
-    state = true;
-    final response = await ref.read(petServiceProvider).deletePet(petId);
-    
-  } catch (e) {
-    debugPrint(e.toString());
+
+  Future<void> deletePet(int petId) async {
+    try {
+      state = true;
+      final response = await ref.read(petServiceProvider).deletePet(petId);
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
-}
-Future<CommonResponse> addPet({
+
+  Future<CommonResponse> addPet({
     required PetRequest petRequest,
     required File profile,
   }) async {
@@ -99,10 +105,12 @@ Future<CommonResponse> addPet({
       return CommonResponse(isSuccess: false, message: e.toString());
     }
   }
+
   Future<void> getPetType(int petTypeId) async {
     try {
       state = true;
-      final response = await ref.read(petServiceProvider).getPetTypeList(petTypeId);
+      final response =
+          await ref.read(petServiceProvider).getPetTypeList(petTypeId);
       _petTypes = (response.data['data'] as List)
           .map((item) => PetType.fromMap(item))
           .toList();
@@ -112,6 +120,7 @@ Future<CommonResponse> addPet({
       state = false;
     }
   }
+
   Future<CommonResponse> updatePet({
     required PetRequest petRequest,
     required File profile,
@@ -139,8 +148,7 @@ Future<CommonResponse> addPet({
       return CommonResponse(isSuccess: false, message: e.toString());
     }
   }
-
 }
 
-final petController = StateNotifierProvider<PetController, bool>(
-    (ref) => PetController(ref));
+final petController =
+    StateNotifierProvider<PetController, bool>((ref) => PetController(ref));

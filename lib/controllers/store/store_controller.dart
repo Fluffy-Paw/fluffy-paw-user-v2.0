@@ -24,7 +24,6 @@ class StoreController extends StateNotifier<bool> {
   List<BookingModel>? _bookings;
   List<BookingModel>? get bookings => _bookings;
 
-
   final Ref ref;
   StoreController(this.ref) : super(false);
 
@@ -32,78 +31,80 @@ class StoreController extends StateNotifier<bool> {
     try {
       state = true;
       final response = await ref.read(storeServiceProvider).getServiceType();
-      
+
       // Parse và lưu data
       _serviceTypeModel = ServiceTypeModel.fromMapList(response.data['data']);
-      
+
       // Debug log
-      debugPrint('Parsed Service Types: ${_serviceTypeModel?.map((e) => '${e.name}: ${e.id}')}');
-      
+      debugPrint(
+          'Parsed Service Types: ${_serviceTypeModel?.map((e) => '${e.name}: ${e.id}')}');
+
       // Cập nhật state
       state = false;
-      
-      
     } catch (e) {
       state = false;
       debugPrint('Error getting store service: ${e.toString()}');
       rethrow;
     }
   }
+
   Future<void> getAllStore() async {
     try {
       state = true;
       final response = await ref.read(storeServiceProvider).getAllStore();
-      
+
       // Parse và lưu data
       if (response.data['data'] != null) {
         final List<dynamic> storeList = response.data['data'];
         _storeModel = storeList
-            .map((store) => StoreModel.fromMap(Map<String, dynamic>.from(store)))
+            .map(
+                (store) => StoreModel.fromMap(Map<String, dynamic>.from(store)))
             .toList();
-        
+
         debugPrint('Loaded ${_storeModel?.length} stores');
       }
-      
+
       state = false;
-      
     } catch (e) {
       state = false;
       debugPrint('Error getting all stores: ${e.toString()}');
       rethrow;
     }
   }
+
   Future<void> getStoresByServiceType(int serviceTypeId) async {
     try {
       state = true;
       final response = await ref
           .read(storeServiceProvider)
           .getAllStoreByServiceTypeId(serviceTypeId);
-      
+
       // Parse và lưu data
       if (response.data['data'] != null) {
         final List<dynamic> storeList = response.data['data'];
         _storesByService = storeList
-            .map((store) => StoreModel.fromMap(Map<String, dynamic>.from(store)))
+            .map(
+                (store) => StoreModel.fromMap(Map<String, dynamic>.from(store)))
             .toList();
-        
+
         debugPrint(
             'Loaded ${_storesByService?.length} stores for service type $serviceTypeId');
-        
+
         // Log chi tiết các store tìm được
         _storesByService?.forEach((store) {
           debugPrint(
               'Store: ${store.name} (ID: ${store.id}) - Brand: ${store.brandName}');
         });
       }
-      
+
       state = false;
-      
     } catch (e) {
       state = false;
       debugPrint('Error getting stores by service type: ${e.toString()}');
       rethrow;
     }
   }
+
   Future<void> getAllBookings() async {
     if (!mounted) return;
 
@@ -116,7 +117,8 @@ class StoreController extends StateNotifier<bool> {
       if (response.data['data'] != null) {
         final List<dynamic> bookingList = response.data['data'];
         _bookings = bookingList
-            .map((booking) => BookingModel.fromMap(Map<String, dynamic>.from(booking)))
+            .map((booking) =>
+                BookingModel.fromMap(Map<String, dynamic>.from(booking)))
             .toList();
 
         // Sort bookings by create date (newest first)
@@ -125,13 +127,11 @@ class StoreController extends StateNotifier<bool> {
         // Debug log
         debugPrint('Loaded ${_bookings?.length} bookings');
         _bookings?.forEach((booking) {
-          debugPrint(
-            'Booking ID: ${booking.id}, '
-            'Service: ${booking.serviceName}, '
-            'Store: ${booking.storeName}, '
-            'Status: ${booking.status}, '
-            'Date: ${booking.createDate}'
-          );
+          debugPrint('Booking ID: ${booking.id}, '
+              'Service: ${booking.serviceName}, '
+              'Store: ${booking.storeName}, '
+              'Status: ${booking.status}, '
+              'Date: ${booking.createDate}');
         });
       } else {
         _bookings = [];
@@ -145,12 +145,14 @@ class StoreController extends StateNotifier<bool> {
       rethrow;
     }
   }
+
   Future<void> getStoreById(int storeId) async {
     if (!mounted) return;
-    
+
     try {
       state = true;
-      final response = await ref.read(storeServiceProvider).getStoreById(storeId);
+      final response =
+          await ref.read(storeServiceProvider).getStoreById(storeId);
       if (!mounted) return;
 
       if (response.data['data'] != null) {
@@ -158,10 +160,10 @@ class StoreController extends StateNotifier<bool> {
         final List<dynamic> storeList = response.data['data'];
         if (storeList.isNotEmpty) {
           // Take the first store from the array
-          _selectedStore = StoreModel.fromMap(
-            Map<String, dynamic>.from(storeList.first)
-          );
-          debugPrint('Loaded store: ${_selectedStore?.name} (ID: ${_selectedStore?.id})');
+          _selectedStore =
+              StoreModel.fromMap(Map<String, dynamic>.from(storeList.first));
+          debugPrint(
+              'Loaded store: ${_selectedStore?.name} (ID: ${_selectedStore?.id})');
         }
       }
       if (mounted) state = false;
@@ -175,13 +177,20 @@ class StoreController extends StateNotifier<bool> {
   Future<void> getStoreServiceByStoreId(int storeId) async {
     try {
       state = true;
-      final response = await ref.read(storeServiceProvider).getStoreServiceByStoreId(storeId);
+      final response = await ref
+          .read(storeServiceProvider)
+          .getStoreServiceByStoreId(storeId);
       if (response.data['data'] != null) {
         final List<dynamic> serviceList = response.data['data'];
-        _storeServices = serviceList.map((service) => StoreServiceModel.fromMap(Map<String, dynamic>.from(service))).toList();
-        debugPrint('Loaded ${_storeServices?.length} services for store ID $storeId');
+        _storeServices = serviceList
+            .map((service) =>
+                StoreServiceModel.fromMap(Map<String, dynamic>.from(service)))
+            .toList();
+        debugPrint(
+            'Loaded ${_storeServices?.length} services for store ID $storeId');
         _storeServices?.forEach((service) {
-          debugPrint('Service: ${service.name} (ID: ${service.id}) - Type: ${service.serviceTypeName}');
+          debugPrint(
+              'Service: ${service.name} (ID: ${service.id}) - Type: ${service.serviceTypeName}');
         });
       }
       state = false;
@@ -191,16 +200,23 @@ class StoreController extends StateNotifier<bool> {
       rethrow;
     }
   }
+
   Future<void> getServiceTime(int storeServiceId) async {
     try {
       state = true;
-      final response = await ref.read(storeServiceProvider).getServiceTime(storeServiceId);
+      final response =
+          await ref.read(storeServiceProvider).getServiceTime(storeServiceId);
       if (response.data['data'] != null) {
         final List<dynamic> serviceList = response.data['data'];
-        _serviceTime = serviceList.map((service) => ServiceTimeModel.fromMap(Map<String, dynamic>.from(service))).toList();
-        debugPrint('Loaded ${_storeServices?.length} time services for store ID $storeServiceId');
+        _serviceTime = serviceList
+            .map((service) =>
+                ServiceTimeModel.fromMap(Map<String, dynamic>.from(service)))
+            .toList();
+        debugPrint(
+            'Loaded ${_storeServices?.length} time services for store ID $storeServiceId');
         _storeServices?.forEach((service) {
-          debugPrint('Service Time: ${service.name} (ID: ${service.id}) - Type: ${service.serviceTypeName}');
+          debugPrint(
+              'Service Time: ${service.name} (ID: ${service.id}) - Type: ${service.serviceTypeName}');
         });
       }
       state = false;
@@ -210,15 +226,14 @@ class StoreController extends StateNotifier<bool> {
       rethrow;
     }
   }
-  Future<Map<String, dynamic>> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description) async {
+
+  Future<Map<String, dynamic>> createBooking(int storeServiceId,
+      List<int> petIds, String paymentMethod, String description) async {
     try {
       state = true;
-      final response = await ref.read(storeServiceProvider).createBooking(
-        storeServiceId, 
-        petIds, 
-        paymentMethod, 
-        description
-      );
+      final response = await ref
+          .read(storeServiceProvider)
+          .createBooking(storeServiceId, petIds, paymentMethod, description);
 
       debugPrint('Response Status Code: ${response.statusCode}');
       debugPrint('Response Data: ${response.data}');
@@ -229,7 +244,7 @@ class StoreController extends StateNotifier<bool> {
         if (response.data != null && response.data['message'] != null) {
           errorMessage = response.data['message'];
         }
-        
+
         state = false;
         return {
           'success': false,
@@ -243,7 +258,6 @@ class StoreController extends StateNotifier<bool> {
         'success': true,
         'message': 'Đặt lịch thành công',
       };
-
     } catch (e) {
       debugPrint('Error creating booking: ${e.toString()}');
       state = false;
@@ -252,8 +266,49 @@ class StoreController extends StateNotifier<bool> {
         'message': 'Đã có lỗi xảy ra: ${e.toString()}',
       };
     }
-}
+  }
+
+  Future<Map<String, dynamic>> selectBookingTime(
+      int petId,
+      List<int> storeServiceIds,
+      String paymentMethod,
+      String description) async {
+    try {
+      state = true;
+      final response = await ref.read(storeServiceProvider).selectBookingTime(
+          petId, storeServiceIds, paymentMethod, description);
+
+      debugPrint('Response Status Code: ${response.statusCode}');
+      debugPrint('Response Data: ${response.data}');
+
+      // Trả về toàn bộ response data để giữ nguyên cấu trúc statusCode
+      if (response.statusCode == 200) {
+        state = false;
+        return {
+          'statusCode': response.data['statusCode'],
+          'message': response.data['message'],
+          'data': response.data['data']
+        };
+      }
+
+      // Trường hợp lỗi
+      state = false;
+      return {
+        'statusCode': response.data['statusCode'] ?? response.statusCode,
+        'message': response.data['message'] ?? 'Đã có lỗi xảy ra',
+        'data': null
+      };
+    } catch (e) {
+      debugPrint('Error selecting booking time: ${e.toString()}');
+      state = false;
+      return {
+        'statusCode': 500,
+        'message': 'Đã có lỗi xảy ra: ${e.toString()}',
+        'data': null
+      };
+    }
+  }
 }
 
-final storeController = StateNotifierProvider<StoreController, bool>(
-    (ref) => StoreController(ref));
+final storeController =
+    StateNotifierProvider<StoreController, bool>((ref) => StoreController(ref));
