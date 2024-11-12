@@ -308,6 +308,33 @@ class StoreController extends StateNotifier<bool> {
       };
     }
   }
+
+  Future<void> cancelBooking(int bookingId) async {
+    try {
+      state = true;
+      final response =
+          await ref.read(storeServiceProvider).cancelBooking(bookingId);
+
+      debugPrint('Response Status Code: ${response.statusCode}');
+      debugPrint('Response Data: ${response.data}');
+
+      // Check if cancellation was successful
+      if (response.statusCode == 200) {
+        debugPrint('Hủy lịch đặt thành công');
+      } else {
+        // Extract error message if available
+        String errorMessage = 'Đã có lỗi xảy ra';
+        if (response.data != null && response.data['message'] != null) {
+          errorMessage = response.data['message'];
+        }
+        debugPrint(errorMessage);
+      }
+    } catch (e) {
+      debugPrint('Error canceling booking: ${e.toString()}');
+    } finally {
+      state = false;
+    }
+  }
 }
 
 final storeController =

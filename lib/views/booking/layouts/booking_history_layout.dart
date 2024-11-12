@@ -1,4 +1,5 @@
 import 'package:fluffypawuser/models/booking/booking_model.dart';
+import 'package:fluffypawuser/views/booking/layouts/booking_detail_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -559,156 +560,166 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
         statusText = booking.status;
     }
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: AppColor.whiteColor,
-        borderRadius: BorderRadius.circular(12.r),
-        border: isNew
-            ? Border.all(color: AppColor.violetColor.withOpacity(0.5), width: 2)
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: isNew
-                ? AppColor.violetColor.withOpacity(0.1)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: isNew ? 15 : 10,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingDetailLayout(booking: booking),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            booking.storeName,
-                            style: AppTextStyle(context).subTitle.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Gap(4.h),
-                          Text(
-                            booking.serviceName,
-                            style: AppTextStyle(context).bodyTextSmall.copyWith(
-                                  color: Colors.grey[600],
-                                ),
-                          ),
-                        ],
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: AppColor.whiteColor,
+          borderRadius: BorderRadius.circular(12.r),
+          border: isNew
+              ? Border.all(color: AppColor.violetColor.withOpacity(0.5), width: 2)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: isNew
+                  ? AppColor.violetColor.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: isNew ? 15 : 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              booking.storeName,
+                              style: AppTextStyle(context).subTitle.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Gap(4.h),
+                            Text(
+                              booking.serviceName,
+                              style: AppTextStyle(context).bodyTextSmall.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              statusIcon,
+                              size: 16.sp,
+                              color: statusColor,
+                            ),
+                            Gap(4.w),
+                            Text(
+                              statusText,
+                              style: AppTextStyle(context).bodyTextSmall.copyWith(
+                                    color: statusColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20.r),
+                    ],
+                  ),
+                  Gap(12.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 16.sp,
+                        color: Colors.grey[600],
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            statusIcon,
-                            size: 16.sp,
-                            color: statusColor,
-                          ),
-                          Gap(4.w),
-                          Text(
-                            statusText,
-                            style: AppTextStyle(context).bodyTextSmall.copyWith(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                          ),
-                        ],
+                      Gap(4.w),
+                      Expanded(
+                        child: Text(
+                          booking.address,
+                          style: AppTextStyle(context).bodyTextSmall.copyWith(
+                                color: Colors.grey[600],
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Gap(12.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 16.sp,
-                      color: Colors.grey[600],
-                    ),
-                    Gap(4.w),
-                    Expanded(
-                      child: Text(
-                        booking.address,
+                    ],
+                  ),
+                  Gap(8.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 16.sp,
+                        color: Colors.grey[600],
+                      ),
+                      Gap(4.w),
+                      Text(
+                        DateFormat('HH:mm, dd/MM/yyyy').format(booking.startTime),
                         style: AppTextStyle(context).bodyTextSmall.copyWith(
                               color: Colors.grey[600],
                             ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-                Gap(8.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time,
-                      size: 16.sp,
-                      color: Colors.grey[600],
-                    ),
-                    Gap(4.w),
-                    Text(
-                      DateFormat('HH:mm, dd/MM/yyyy').format(booking.startTime),
-                      style: AppTextStyle(context).bodyTextSmall.copyWith(
-                            color: Colors.grey[600],
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(12.r),
-                bottomRight: Radius.circular(12.r),
+                    ],
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Tổng thanh toán',
-                  style: AppTextStyle(context).bodyText.copyWith(
-                        color: Colors.grey[700],
-                      ),
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(12.r),
+                  bottomRight: Radius.circular(12.r),
                 ),
-                Text(
-                  '${NumberFormat('#,###', 'vi_VN').format(booking.cost)}đ',
-                  style: AppTextStyle(context).title.copyWith(
-                        color: AppColor.violetColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Tổng thanh toán',
+                    style: AppTextStyle(context).bodyText.copyWith(
+                          color: Colors.grey[700],
+                        ),
+                  ),
+                  Text(
+                    '${NumberFormat('#,###', 'vi_VN').format(booking.cost)}đ',
+                    style: AppTextStyle(context).title.copyWith(
+                          color: AppColor.violetColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

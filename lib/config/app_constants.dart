@@ -35,6 +35,7 @@ class AppConstants {
   static const String getAllBooking ='$baseUrl/api/PetOwner/GetAllBooking';
   static const String createBooking= '$baseUrl/api/PetOwner/CreateBooking';
   static const String createBookingTimeSelection='$baseUrl/api/PetOwner/CreateBookingTimeSelection';
+  static const String cancelBooking ='$baseUrl/api/PetOwner/CancelBooking';
 
   
 

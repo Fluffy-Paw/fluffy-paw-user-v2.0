@@ -1,5 +1,5 @@
 import 'package:fluffypawuser/views/authentication/login_view.dart';
-import 'package:fluffypawuser/views/booking/components/booking_history_layout.dart';
+import 'package:fluffypawuser/views/booking/layouts/booking_history_layout.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/bottom_navigation_bar_view.dart';
 import 'package:fluffypawuser/views/home_screen/layouts/home_layout.dart';
 import 'package:fluffypawuser/views/pet/add_vaccine_view.dart';
@@ -10,8 +10,6 @@ import 'package:fluffypawuser/views/pet/pet_type_view.dart';
 import 'package:fluffypawuser/views/pet/vaccine_detail_view.dart';
 import 'package:fluffypawuser/views/splash_screen/splash_view.dart';
 import 'package:fluffypawuser/views/store/choose_pet_for_booking_view.dart';
-import 'package:fluffypawuser/views/store/layouts/choose_pet_for_booking_layout.dart';
-import 'package:fluffypawuser/views/store/layouts/store_list_by_service_layout.dart';
 import 'package:fluffypawuser/views/store/store_detail_view.dart';
 import 'package:fluffypawuser/views/store/store_list_view.dart';
 import 'package:fluffypawuser/views/wallet/top_up_view.dart';

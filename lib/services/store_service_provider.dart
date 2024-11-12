@@ -13,6 +13,7 @@ abstract class StoreProvider {
   Future<Response> createBooking(int storeServiceId, List<int> petIds, String paymentMethod, String description);
   Future<Response> getAllBooking();
   Future<Response> selectBookingTime(int petId, List<int> storeServiceIds, String paymentMethod, String description);
+  Future<Response> cancelBooking(int bookingId);
 
 
 }
@@ -90,6 +91,14 @@ class StoreServiceProvider implements StoreProvider {
         "description": description
       },
     );
+    return response;
+  }
+  
+  @override
+  Future<Response> cancelBooking(int bookingId) {
+   final response = ref
+        .read(apiClientProvider)
+        .patch('${AppConstants.cancelBooking}/$bookingId');
     return response;
   }
 
