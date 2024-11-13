@@ -1,7 +1,9 @@
 class AppConstants {
   // API constants
   static const String baseUrl = 'https://fluffypaw.azurewebsites.net';
+  //Account
   static const String loginUrl = '$baseUrl/api/Authentication/Login';
+  static const String registerPO = '$baseUrl/api/Authentication/RegisterPO';
   static const String getAccountDetails = '$baseUrl/api/PetOwner/GetPetOwnerDetail';
   //Pet
   static const String getPetListUrl = '$baseUrl/api/Pet/GetAllPets';

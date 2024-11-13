@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:fluffypawuser/config/app_constants.dart';
 import 'package:fluffypawuser/config/theme.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
@@ -19,13 +20,9 @@ void main() async{
   await Hive.openBox(AppConstants.petBehaviorBox);
   await Hive.openBox(AppConstants.petBox);
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform, // Initialize with options
-  // );
-  // final authService = AuthService();
-  // bool isExpired = await authService.isTokenExpired();
-  // Widget defaultHome = isExpired ? SplashScreen() : Home();
+  
 
   runApp(const ProviderScope(child: MyApp())
     // DevicePreview(

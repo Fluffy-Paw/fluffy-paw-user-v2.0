@@ -7,6 +7,7 @@ import 'package:fluffypawuser/controllers/authentication/authentication_controll
 import 'package:fluffypawuser/controllers/misc/misc_provider.dart';
 import 'package:fluffypawuser/gen/assets.gen.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
+import 'package:fluffypawuser/routes.dart';
 import 'package:fluffypawuser/utils/context_less_navigation.dart';
 import 'package:fluffypawuser/utils/global_function.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/layouts/bottom_navigation_layout.dart';
@@ -60,8 +61,8 @@ class _LoginLayoutState extends ConsumerState<LoginLayout> {
                           color: colors(context).primaryColor,
                           fontSize: 14.sp,
                         ),
-                    // recognizer: TapGestureRecognizer()
-                    //   ..onTap = () => context.nav.pushNamed(Routes.signUp),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => context.nav.pushNamed(Routes.register),
                   ),
                 ],
               ),

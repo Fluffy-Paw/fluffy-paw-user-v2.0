@@ -1,4 +1,5 @@
 import 'package:fluffypawuser/views/authentication/login_view.dart';
+import 'package:fluffypawuser/views/authentication/phone_view.dart';
 import 'package:fluffypawuser/views/booking/layouts/booking_history_layout.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/bottom_navigation_bar_view.dart';
 import 'package:fluffypawuser/views/home_screen/layouts/home_layout.dart';
@@ -36,6 +37,7 @@ class Routes{
   static const topUp="/topUp";
   static const withdraw="/withdraw";
   static const bookingHistory="/bookingHistory";
+  static const register="/register";
   
 }
 Route generatedRoutes(RouteSettings settings){
@@ -47,6 +49,9 @@ Route generatedRoutes(RouteSettings settings){
       break;
     case Routes.login:
       child = const LoginView();
+      break;
+    case Routes.register:
+      child = const PhoneView();
       break;
     case Routes.selectPetType:
       child = const PetTypeView();

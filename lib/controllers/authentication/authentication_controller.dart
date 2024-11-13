@@ -1,6 +1,7 @@
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
 import 'package:fluffypawuser/controllers/profile/profile_controller.dart';
+import 'package:fluffypawuser/models/register/register_model.dart';
 import 'package:fluffypawuser/services/auth_service_provider.dart';
 import 'package:fluffypawuser/utils/api_clients.dart';
 import 'package:flutter/material.dart';
@@ -54,6 +55,23 @@ class AuthenticationController extends StateNotifier<bool> {
       ref.read(apiClientProvider).updateToken(token: accessToken);
       await ref.read(profileController.notifier).getAccountDetails();
       await ref.read(petController.notifier).getPetList();
+      state = false;
+      return true;
+    } catch (e) {
+      debugPrint(e.toString());
+      state = false;
+      return false;
+    }
+  }
+  Future<bool> register(RegisterModel registerModel) async {
+    try {
+      state = true;
+      final response = await ref.read(authServiceProvider).register(registerModel);
+
+      if (response.statusCode != 200) {
+        state = false;
+        return false;
+      }
       state = false;
       return true;
     } catch (e) {

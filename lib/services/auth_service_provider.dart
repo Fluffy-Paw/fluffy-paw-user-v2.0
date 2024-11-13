@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:fluffypawuser/config/app_constants.dart';
+import 'package:fluffypawuser/models/register/register_model.dart';
 import 'package:fluffypawuser/utils/api_clients.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract class AuthProvider {
   Future<Response> login({required String contact, required String password});
+  Future<Response> register(RegisterModel registerModel);
   // Future<Response> registration({
   //   required SignUpModel signUpModel,
   //   required File profile,
@@ -32,6 +34,16 @@ class AuthService implements AuthProvider {
     );
     return response;
   }
+  
+  @override
+  Future<Response> register(RegisterModel registerModel) async {
+    final response = await ref.read(apiClientProvider).post(
+      AppConstants.registerPO,  // Ensure AppConstants.registerUrl is defined
+      data: registerModel.toMap(),
+    );
+    return response;
+  }
+
 
   // @override
   // Future<Response> registration(
