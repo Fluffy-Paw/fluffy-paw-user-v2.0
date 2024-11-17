@@ -34,213 +34,215 @@ class ProfileLayout extends ConsumerStatefulWidget {
 }
 
 class _ProfileLayoutState extends ConsumerState<ProfileLayout> {
-  @override
-  void initState() {
-    // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-    //   ref
-    //       .read(profileController.notifier)
-    //       .getEarningHistory(
-    //         type: ref.read(selectedDateFilter),
-    //         date: ref.read(selectedDate),
-    //         paymentMethod: null,
-    //         pagination: false,
-    //         page: 1,
-    //         perPage: 20,
-    //       )
-    //       .then((value) {
-    //     setState(() {
-    //       earningThisMonth = ref
-    //           .read(profileController.notifier)
-    //           .earningHistory
-    //           .thisMonthEarnings;
-    //     });
-    //   });
-    // });
+  String earningThisMonth = '';
 
-    super.initState();
+  Future<void> _handleLogout() async {
+    try {
+      await ref.read(hiveStoreService).removeAllData();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          Routes.login,
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Logout error: $e');
+      if (mounted) {
+        GlobalFunction.showCustomSnackbar(
+          message: 'Error during logout: $e',
+          isSuccess: false,
+        );
+      }
+    }
   }
 
-  bool isLoading = true;
-  String earningThisMonth = '';
   @override
   Widget build(BuildContext context) {
-    final bool isDark =
-        Theme.of(context).scaffoldBackgroundColor == AppColor.blackColor;
+    final bool isDark = Theme.of(context).scaffoldBackgroundColor == AppColor.blackColor;
+    
     return Scaffold(
       backgroundColor: isDark ? AppColor.blackColor : AppColor.offWhiteColor,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeaderWidget(context: context, ref: ref),
+            _buildHeaderWidget(),
             Gap(14.h),
-            _buildBodyWidget(context: context),
+            _buildBodyWidget(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeaderWidget(
-      {required BuildContext context, required WidgetRef ref}) {
+  Widget _buildHeaderWidget() {
     return ValueListenableBuilder(
-        valueListenable: Hive.box(AppConstants.userBox).listenable(),
-        builder: (context, userBox, _) {
-          Map<dynamic, dynamic>? userInfo = userBox.get(AppConstants.userData);
-          Map<String, dynamic> userInfoStringKeys =
-              userInfo!.cast<String, dynamic>();
-          UserModel user = UserModel.fromMap(userInfoStringKeys);
-          return Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20.w)
-                    .copyWith(top: 60.h, bottom: 14.h),
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        CircleAvatar(
-                          radius: 40.sp,
-                          backgroundImage:
-                              CachedNetworkImageProvider(user.avatar),
+      valueListenable: Hive.box(AppConstants.userBox).listenable(),
+      builder: (context, userBox, _) {
+        final userInfo = userBox.get(AppConstants.userData);
+        if (userInfo == null) {
+          return SizedBox(height: 200.h); // Placeholder height
+        }
+
+        UserModel? user;
+        try {
+          Map<String, dynamic> userInfoStringKeys = Map<String, dynamic>.from(userInfo);
+          user = UserModel.fromMap(userInfoStringKeys);
+        } catch (e) {
+          debugPrint('Error parsing user data: $e');
+          return SizedBox(height: 200.h);
+        }
+
+        return Stack(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 20.w)
+                  .copyWith(top: 60.h, bottom: 14.h),
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      CircleAvatar(
+                        radius: 40.sp,
+                        backgroundImage: CachedNetworkImageProvider(
+                          user.avatar,
+                          errorListener: (error) => debugPrint('Error loading avatar: $error'),
                         ),
-                        Positioned(
-                          right: -10,
-                          bottom: 0,
-                          child: CircleAvatar(
-                            radius: 16.sp,
-                            backgroundImage: CachedNetworkImageProvider(
-                                Assets.svg.fluffyPawDarl),
-                          ),
-                        )
-                      ],
-                    ),
-                    Gap(14.h),
-                    Row(
-                      children: [
-                        Text(
-                          "${user.username} ${"Pet Owner"}",
-                          style: AppTextStyle(context).title,
-                        ),
-                        Gap(10.w),
-                        CircleAvatar(
-                          radius: 3,
-                          backgroundColor: colors(context)
-                              .bodyTextSmallColor!
-                              .withOpacity(0.2),
-                        ),
-                        Gap(10.w),
-                        Text(
-                          user.phone,
-                          style: AppTextStyle(context)
-                              .bodyTextSmall
-                              .copyWith(fontWeight: FontWeight.w500),
-                        )
-                      ],
-                    ),
-                    Gap(10.h),
-                    Text(
-                      user.email,
-                      style: AppTextStyle(context).bodyTextSmall.copyWith(),
-                    ),
-                    Gap(14.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20.w, vertical: 10.h),
-                      decoration: BoxDecoration(
-                        color: colors(context).primaryColor,
-                        borderRadius: BorderRadius.circular(12.r),
+                        onBackgroundImageError: (exception, stackTrace) {
+                          debugPrint('Error loading avatar: $exception');
+                        },
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(
-                                  Assets.svg.doller,
-                                  color: AppColor.whiteColor,
-                                  height: 30.h,
-                                ),
-                                Gap(10.w),
-                                Text(
-                                  S.of(context).fluffyCoin,
-                                  style: AppTextStyle(context)
-                                      .bodyTextSmall
-                                      .copyWith(
-                                        color: AppColor.whiteColor,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                )
-                              ],
-                            ),
+                      Positioned(
+                        right: -10,
+                        bottom: 0,
+                        child: CircleAvatar(
+                          radius: 16.sp,
+                          backgroundColor: Colors.white,
+                          child: SvgPicture.asset(
+                            Assets.svg.fluffyPawDarl,
+                            width: 24.sp,
                           ),
-                          ref.watch(profileController)
-                              ? Shimmer.fromColors(
-                                  baseColor: AppColor.whiteColor,
-                                  highlightColor: AppColor.blackColor,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 8.w, vertical: 3.h),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      color: AppColor.offWhiteColor
-                                          .withOpacity(0.2),
-                                    ),
-                                    child: Text(
-                                      '0.00',
-                                      style: AppTextStyle(context)
-                                          .title
-                                          .copyWith(
-                                              color: AppColor.whiteColor,
-                                              fontSize: 16.sp),
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  '${AppConstants.appCurrency}${GlobalFunction.numberLocalization(earningThisMonth)}',
-                                  style: AppTextStyle(context)
-                                      .bodyTextSmall
-                                      .copyWith(
-                                        color: AppColor.whiteColor,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                )
-                        ],
+                        ),
+                      )
+                    ],
+                  ),
+                  Gap(14.h),
+                  Row(
+                    children: [
+                      Text(
+                        "${user.username} Pet Owner",
+                        style: AppTextStyle(context).title,
                       ),
-                    )
-                  ],
-                ),
+                      Gap(10.w),
+                      CircleAvatar(
+                        radius: 3,
+                        backgroundColor: colors(context).bodyTextSmallColor!.withOpacity(0.2),
+                      ),
+                      Gap(10.w),
+                      Text(
+                        user.phone,
+                        style: AppTextStyle(context).bodyTextSmall.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      )
+                    ],
+                  ),
+                  Gap(10.h),
+                  Text(
+                    user.email,
+                    style: AppTextStyle(context).bodyTextSmall,
+                  ),
+                  Gap(14.h),
+                  _buildFluffyCoinCard(),
+                ],
               ),
-              Positioned(
-                top: 70.h,
-                right: 20.w,
-                child: FlutterSwitch(
-                  width: 80.w,
-                  activeText: S.of(context).open,
-                  inactiveText: S.of(context).close,
-                  valueFontSize: 14,
-                  activeTextColor: AppColor.whiteColor,
-                  activeColor: AppColor.violetColor,
-                  inactiveTextFontWeight: FontWeight.w400,
-                  activeTextFontWeight: FontWeight.w400,
-                  showOnOff: true,
-                  //value: ref.watch(shopStatus),
-                  value: true,
-                  onToggle: (v) {
-                    //ref.read(shopStatus.notifier).state = v;
-                  },
+            ),
+            Positioned(
+              top: 70.h,
+              right: 20.w,
+              child: FlutterSwitch(
+                width: 80.w,
+                activeText: S.of(context).open,
+                inactiveText: S.of(context).close,
+                valueFontSize: 14,
+                activeTextColor: AppColor.whiteColor,
+                activeColor: AppColor.violetColor,
+                inactiveTextFontWeight: FontWeight.w400,
+                activeTextFontWeight: FontWeight.w400,
+                showOnOff: true,
+                value: true,
+                onToggle: (v) {},
+              ),
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFluffyCoinCard() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: colors(context).primaryColor,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              SvgPicture.asset(
+                Assets.svg.doller,
+                color: AppColor.whiteColor,
+                height: 30.h,
+              ),
+              Gap(10.w),
+              Text(
+                S.of(context).fluffyCoin,
+                style: AppTextStyle(context).bodyTextSmall.copyWith(
+                  color: AppColor.whiteColor,
+                  fontWeight: FontWeight.w400,
                 ),
               )
             ],
-          );
-        });
+          ),
+          ref.watch(profileController)
+              ? Shimmer.fromColors(
+                  baseColor: AppColor.whiteColor,
+                  highlightColor: AppColor.blackColor,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                      color: AppColor.offWhiteColor.withOpacity(0.2),
+                    ),
+                    child: Text(
+                      '0.00',
+                      style: AppTextStyle(context).title.copyWith(
+                        color: AppColor.whiteColor,
+                        fontSize: 16.sp,
+                      ),
+                    ),
+                  ),
+                )
+              : Text(
+                  '${AppConstants.appCurrency}${GlobalFunction.numberLocalization(earningThisMonth)}',
+                  style: AppTextStyle(context).bodyTextSmall.copyWith(
+                    color: AppColor.whiteColor,
+                    fontWeight: FontWeight.w400,
+                  ),
+                )
+        ],
+      ),
+    );
   }
 
-  Widget _buildBodyWidget({required BuildContext context}) {
+  Widget _buildBodyWidget() {
     return AnimationLimiter(
       child: Column(
         children: AnimationConfiguration.toStaggeredList(
@@ -250,185 +252,13 @@ class _ProfileLayoutState extends ConsumerState<ProfileLayout> {
             child: FadeInAnimation(child: widget),
           ),
           children: [
-            // seller part
-            Container(
-              color: AppColor.whiteColor,
-              child: Column(
-                children: [
-                  MenuCard(
-                    context: context,
-                    icon: Assets.svg.pet,
-                    text: S.of(context).pet,
-                    onTap: () {
-                      // Refresh pet list khi vào trang
-                      ref.read(petController.notifier).getPetList();
-                      // Điều hướng đến trang pet list
-                      context.nav.pushNamed(Routes.petList);
-                    },
-                  ),
-                  const Divider(
-                    height: 0,
-                    thickness: 0.5,
-                    indent: 20,
-                    endIndent: 20,
-                  ),
-                  MenuCard(
-                    context: context,
-                    icon: Assets.svg.userProfile,
-                    text: S.of(context).account,
-                    onTap: () {
-                      //context.nav.pushNamed(Routes.sellerAccount);
-                    },
-                  ),
-                  const Divider(
-                    height: 0,
-                    thickness: 0.5,
-                    indent: 20,
-                    endIndent: 20,
-                  ),
-                  // MenuCard(
-                  //   context: context,
-                  //   icon: Assets.svg.storeAccount,
-                  //   text: S.of(context).staffmanageservice,
-                  //   onTap: () {
-                  //     //context.nav.pushNamed(Routes.storeAccount);
-                  //   },
-                  // ),
-                ],
-              ),
-            ),
+            _buildMenuSection(),
             Gap(14.h),
-            // language
-            Container(
-              color: AppColor.whiteColor,
-              child: Column(
-                children: [
-                  MenuCard(
-                    context: context,
-                    icon: Assets.svg.language,
-                    text: S.of(context).language,
-                    type: 'launguage',
-                    onTap: () {
-                      showModalBottomSheet(
-                        isDismissible: true,
-                        backgroundColor:
-                            Theme.of(context).scaffoldBackgroundColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(12.r),
-                            topRight: Radius.circular(12.r),
-                          ),
-                        ),
-                        context: context,
-                        builder: (BuildContext context) {
-                          return ShowLanguage();
-                        },
-                      );
-                    },
-                  ),
-                  const Divider(
-                    height: 0,
-                    thickness: 0.5,
-                    indent: 20,
-                    endIndent: 20,
-                  ),
-                  MenuCard(
-                    context: context,
-                    icon: Assets.svg.sun,
-                    text: S.of(context).theme,
-                    type: 'theme',
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
-
+            _buildLanguageSection(),
             Gap(14.h),
-            // settings part
-            Container(
-              color: AppColor.whiteColor,
-              child: Column(
-                children: [
-                  MenuCard(
-                    context: context,
-                    icon: Assets.svg.sellerSupport,
-                    text: S.of(context).support,
-                    onTap: () {
-                      //context.nav.pushNamed(Routes.sellerSupportView);
-                    },
-                  ),
-                  const Divider(
-                    height: 0,
-                    thickness: 0.5,
-                    indent: 20,
-                    endIndent: 20,
-                  ),
-                  // MenuCard(
-                  //   context: context,
-                  //   icon: Assets.svg.termsConditions,
-                  //   text: S.of(context).termsconditions,
-                  //   onTap: () {
-                  //     //context.nav.pushNamed(Routes.termsAndconditionsView);
-                  //   },
-                  // ),
-                  // const Divider(
-                  //   height: 0,
-                  //   thickness: 0.5,
-                  //   indent: 20,
-                  //   endIndent: 20,
-                  // ),
-                  // MenuCard(
-                  //   context: context,
-                  //   icon: Assets.svg.privacy,
-                  //   text: S.of(context).privacyPolicy,
-                  //   onTap: () {
-                  //     //context.nav.pushNamed(Routes.privacyPolicyView);
-                  //   },
-                  // ),
-                ],
-              ),
-            ),
+            _buildSettingsSection(),
             Gap(14.h),
-            // logout
-            Consumer(builder: (context, ref, _) {
-              return MenuCard(
-                context: context,
-                icon: Assets.svg.logout,
-                text: S.of(context).logout,
-                type: 'logout',
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => ConfirmationDialog(
-                      isLoading: false,
-                      text: S.of(context).logoutDes,
-                      cancelTapAction: () {
-                        context.nav.pop(context);
-                      },
-                      applyTapAction: () {
-                        ref
-                            .read(hiveStoreService)
-                            .removeAllData()
-                            .then((isSuccess) {
-                          if (isSuccess) {
-                            ref.refresh(selectedIndexProvider.notifier).state;
-                            context.nav.pushNamedAndRemoveUntil(
-                                Routes.login, (route) => false);
-                          } else {
-                            context.nav.pop();
-                            GlobalFunction.showCustomSnackbar(
-                              message: 'Somthing went wrong!',
-                              isSuccess: false,
-                            );
-                          }
-                        });
-                      },
-                      image: Assets.image.question.image(width: 80.w),
-                    ),
-                  );
-                },
-              );
-            }),
+            _buildLogoutButton(),
             Gap(50.h),
           ],
         ),
@@ -436,9 +266,121 @@ class _ProfileLayoutState extends ConsumerState<ProfileLayout> {
     );
   }
 
-  final String profileImage =
-      "https://as2.ftcdn.net/v2/jpg/03/64/21/11/1000_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg";
+  Widget _buildMenuSection() {
+    return Container(
+      color: AppColor.whiteColor,
+      child: Column(
+        children: [
+          MenuCard(
+            context: context,
+            icon: Assets.svg.pet,
+            text: S.of(context).pet,
+            onTap: () {
+              ref.read(petController.notifier).getPetList();
+              context.nav.pushNamed(Routes.petList);
+            },
+          ),
+          _buildDivider(),
+          MenuCard(
+            context: context,
+            icon: Assets.svg.userProfile,
+            text: S.of(context).account,
+            onTap: () => context.nav.pushNamed(Routes.profile),
+          ),
+          _buildDivider(),
+        ],
+      ),
+    );
+  }
 
-  final String shopLogo =
-      "https://i.pinimg.com/originals/0d/cf/b5/0dcfb548989afdf22afff75e2a46a508.jpg";
+  Widget _buildLanguageSection() {
+    return Container(
+      color: AppColor.whiteColor,
+      child: Column(
+        children: [
+          MenuCard(
+            context: context,
+            icon: Assets.svg.language,
+            text: S.of(context).language,
+            type: 'language',
+            onTap: () => _showLanguageBottomSheet(),
+          ),
+          _buildDivider(),
+          MenuCard(
+            context: context,
+            icon: Assets.svg.sun,
+            text: S.of(context).theme,
+            type: 'theme',
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection() {
+    return Container(
+      color: AppColor.whiteColor,
+      child: Column(
+        children: [
+          MenuCard(
+            context: context,
+            icon: Assets.svg.sellerSupport,
+            text: S.of(context).support,
+            onTap: () {},
+          ),
+          _buildDivider(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return MenuCard(
+      context: context,
+      icon: Assets.svg.logout,
+      text: S.of(context).logout,
+      type: 'logout',
+      onTap: () {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => ConfirmationDialog(
+            isLoading: false,
+            text: S.of(context).logoutDes,
+            cancelTapAction: () => Navigator.pop(dialogContext),
+            applyTapAction: () {
+              Navigator.pop(dialogContext);
+              _handleLogout();
+            },
+            image: Assets.image.question.image(width: 80.w),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDivider() {
+    return const Divider(
+      height: 0,
+      thickness: 0.5,
+      indent: 20,
+      endIndent: 20,
+    );
+  }
+
+  void _showLanguageBottomSheet() {
+    showModalBottomSheet(
+      isDismissible: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12.r),
+          topRight: Radius.circular(12.r),
+        ),
+      ),
+      context: context,
+      builder: (BuildContext context) => ShowLanguage(),
+    );
+  }
 }

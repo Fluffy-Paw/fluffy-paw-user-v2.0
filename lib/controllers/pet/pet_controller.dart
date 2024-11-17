@@ -25,7 +25,9 @@ class PetController extends StateNotifier<bool> {
       state = true;
       final response = await ref.read(petServiceProvider).getPetList();
       _pets = PetModel.fromMapList(response.data['data']);
-      //await ref.read(hiveStoreService).savePetInfo(pets: pets);
+      if (_pets != null) {
+      await ref.read(hiveStoreService).savePetInfo(pets: _pets!);
+    }
 
       state = false;
     } catch (e) {

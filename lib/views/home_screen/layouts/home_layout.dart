@@ -16,6 +16,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeLayout extends ConsumerStatefulWidget {
   @override
@@ -30,13 +31,47 @@ class _HomeState extends ConsumerState<HomeLayout> {
   @override
   void initState() {
     super.initState();
-    loadData();
+    _initializeData();
   }
-
-  Future<void> loadData() async {
+  Future<void> _initializeData() async {
+    // Load cached data first
+    await _loadCachedData();
+    // Then load fresh data
+    await loadData();
+  }
+  Future<void> _loadCachedData() async {
     try {
-      setState(() => isLoading = true);
+      if (Hive.isBoxOpen(AppConstants.userBox)) {
+        final userBox = Hive.box(AppConstants.userBox);
+        final userData = userBox.get(AppConstants.userData);
+        if (userData != null) {
+          setState(() {
+            userInfo = UserModel.fromMap(Map<String, dynamic>.from(userData));
+            isLoading = false;
+          });
+        }
+      }
 
+      if (Hive.isBoxOpen(AppConstants.petBox)) {
+        final petBox = Hive.box(AppConstants.petBox);
+        final petData = petBox.get(AppConstants.petData, defaultValue: []) as List;
+        if (petData.isNotEmpty) {
+          setState(() {
+            pets = petData
+                .map((data) => PetModel.fromMap(Map<String, dynamic>.from(data)))
+                .toList();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading cached data: $e');
+    }
+  }
+  Future<void> loadData() async {
+    if (!mounted) return;
+
+    setState(() => isLoading = true);
+    try {
       // Load user data
       final userBox = await Hive.openBox(AppConstants.userBox);
       final userData = userBox.get(AppConstants.userData);
@@ -46,16 +81,18 @@ class _HomeState extends ConsumerState<HomeLayout> {
 
       // Load pet data
       final petBox = await Hive.openBox(AppConstants.petBox);
-      final petData =
-          petBox.get(AppConstants.petData, defaultValue: []) as List;
+      final petData = petBox.get(AppConstants.petData, defaultValue: []) as List;
       pets = petData
           .map((data) => PetModel.fromMap(Map<String, dynamic>.from(data)))
           .toList();
-          await ref.read(storeController.notifier).getServiceTypeList();
+      await ref.read(storeController.notifier).getServiceTypeList();
+
     } catch (e) {
       print('Error loading data: $e');
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
   Map<String, String> serviceIconMap = {
@@ -69,21 +106,30 @@ class _HomeState extends ConsumerState<HomeLayout> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: loadData, // Pull-to-refresh action
-              child: SingleChildScrollView(
-                child: Stack(
+      body: RefreshIndicator(
+        onRefresh: loadData,
+        child: SingleChildScrollView(
+          child: isLoading
+              ? Column(
+                  children: [
+                    _buildShimmerHeader(),
+                    SizedBox(height: 110.h),
+                    _buildShimmerServiceIcons(),
+                    SizedBox(height: 20.h),
+                    _buildShimmerPetCard(),
+                    SizedBox(height: 30.h),
+                    _buildShimmerActivityList(),
+                  ],
+                )
+              : Stack(
                   children: [
                     Column(
                       children: [
-                       _buildAppBar(),
-                      SizedBox(height: 110.h),
-                      _buildIconContainer(), // Thêm container chứa các icon
-                      SizedBox(height: 20.h), // Khoảng cách giữa các phần
-                      _buildPetList(),
-                        
+                        _buildAppBar(),
+                        SizedBox(height: 110.h),
+                        _buildIconContainer(),
+                        SizedBox(height: 20.h),
+                        _buildPetList(),
                       ],
                     ),
                     Positioned(
@@ -94,11 +140,151 @@ class _HomeState extends ConsumerState<HomeLayout> {
                     ),
                   ],
                 ),
-              ),
-            ),
+        ),
+      ),
     );
   }
 
+  Widget _buildShimmerHeader() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        height: 250.h,
+        child: Stack(
+          children: [
+            Container(
+              height: 250.h,
+              color: Colors.white,
+            ),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20.w, 60.h, 20.w, 20.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 56.w,
+                      height: 56.h,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Container(
+                      width: 200.w,
+                      height: 24.h,
+                      color: Colors.white,
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      width: 150.w,
+                      height: 16.h,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerServiceIcons() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 20.w),
+        padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 15.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(
+            4,
+            (index) => Column(
+              children: [
+                Container(
+                  width: 65.w,
+                  height: 65.w,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Container(
+                  width: 50.w,
+                  height: 14.h,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerPetCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 20.w),
+        height: 150.h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerActivityList() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+              width: 150.w,
+              height: 24.h,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          ...List.generate(
+            3,
+            (index) => Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(
+                  height: 80.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildAppBar() {
     return Container(

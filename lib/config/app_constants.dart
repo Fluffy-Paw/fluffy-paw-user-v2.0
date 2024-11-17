@@ -5,6 +5,7 @@ class AppConstants {
   static const String loginUrl = '$baseUrl/api/Authentication/Login';
   static const String registerPO = '$baseUrl/api/Authentication/RegisterPO';
   static const String getAccountDetails = '$baseUrl/api/PetOwner/GetPetOwnerDetail';
+  static const String updateProfile = '$baseUrl/api/PetOwner/UpdatePetOwnerAccount';
   //Pet
   static const String getPetListUrl = '$baseUrl/api/Pet/GetAllPets';
   static const String getPetDetailUrl = '$baseUrl/api/Pet/GetPet';

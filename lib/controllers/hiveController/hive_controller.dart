@@ -17,6 +17,29 @@ class HiveController {
     await authBox.put(AppConstants.authToken, authToken); // Sửa key thành authToken
   }
 
+  Future<bool> removeAllData() async {
+    try {
+      // Clear data from boxes if they're open
+      if (Hive.isBoxOpen(AppConstants.appSettingsBox)) {
+        await Hive.box(AppConstants.appSettingsBox).clear();
+      }
+      if (Hive.isBoxOpen(AppConstants.userBox)) {
+        await Hive.box(AppConstants.userBox).clear();
+      }
+      if (Hive.isBoxOpen(AppConstants.petBox)) {
+        await Hive.box(AppConstants.petBox).clear();
+      }
+      if (Hive.isBoxOpen(AppConstants.petBehaviorBox)) {
+        await Hive.box(AppConstants.petBehaviorBox).clear();
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Error clearing data: $e');
+      return false;
+    }
+  }
+
   // remove access token
   Future removeUserAuthToken() async {
     final authBox = await Hive.openBox(AppConstants.appSettingsBox);
@@ -76,14 +99,14 @@ class HiveController {
 
 
   //Remove Data When Sign Out
-  Future<bool> removeAllData() async {
-    try {
-      await removeUserAuthToken();
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
+  // Future<bool> removeAllData() async {
+  //   try {
+  //     await removeUserAuthToken();
+  //     return true;
+  //   } catch (e) {
+  //     return false;
+  //   }
+  // }
 
   // get user auth token
   Future<String?> getAuthToken() async {

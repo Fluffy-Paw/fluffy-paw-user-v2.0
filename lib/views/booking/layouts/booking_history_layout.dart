@@ -477,13 +477,14 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
     final Map<String, List<BookingModel>> groupedBookings = {};
     final now = DateTime.now();
 
-    // Sort bookings by date (newest first)
-    bookings.sort((a, b) => b.createDate.compareTo(a.createDate));
+    // Sort bookings by createDate (newest first)
+    List<BookingModel> sortedBookings = List.from(bookings)
+      ..sort((a, b) => b.createDate.compareTo(a.createDate));
 
     // Get the newest booking's ID for highlighting
-    final newestBookingId = bookings.first.id;
+    final newestBookingId = sortedBookings.first.id;
 
-    for (var booking in bookings) {
+    for (var booking in sortedBookings) {
       final bookingDate = booking.createDate;
       final difference = now.difference(bookingDate).inDays;
 
@@ -498,18 +499,30 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
         groupKey = 'Cũ hơn';
       }
 
-      if (!groupedBookings.containsKey(groupKey)) {
-        groupedBookings[groupKey] = [];
-      }
+      groupedBookings.putIfAbsent(groupKey, () => []);
       groupedBookings[groupKey]!.add(booking);
     }
 
+    // Sort group keys to ensure "Hôm nay", "Hôm qua" appear first
+    final sortedGroupKeys = groupedBookings.keys.toList()
+      ..sort((a, b) {
+        final order = {
+          'Hôm nay': 0,
+          'Hôm qua': 1,
+          'Cũ hơn': 999, // Put "Cũ hơn" at the end
+        };
+        return (order[a] ?? 2).compareTo(order[b] ?? 2);
+      });
+
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      itemCount: groupedBookings.length,
+      itemCount: sortedGroupKeys.length,
       itemBuilder: (context, index) {
-        final groupKey = groupedBookings.keys.elementAt(index);
+        final groupKey = sortedGroupKeys[index];
         final groupBookings = groupedBookings[groupKey]!;
+        
+        // Sort bookings within each group by createDate (newest first)
+        groupBookings.sort((a, b) => b.createDate.compareTo(a.createDate));
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

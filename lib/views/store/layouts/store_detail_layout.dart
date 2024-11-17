@@ -25,6 +25,7 @@ class StoreDetailLayout extends ConsumerStatefulWidget {
 }
 
 class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
+  
   StoreServiceModel? selectedService;
 
   @override

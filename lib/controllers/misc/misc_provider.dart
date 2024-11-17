@@ -1,3 +1,5 @@
+import 'package:fluffypawuser/controllers/home/home_controller.dart';
+import 'package:fluffypawuser/models/home/home_data_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +16,7 @@ final selectedBehaviorCategory = StateProvider<int?>((ref) => null);
 final hasNewBookingProvider = StateProvider<bool>((ref) => false);
 final bottomTabControllerProvider =
 Provider<PageController>((ref) => PageController());
+
 final firstNameProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();
   return controller;
@@ -27,6 +30,9 @@ final dateOfBirthProvider = Provider<TextEditingController>((ref) {
     controller.dispose();
   });
   return controller;
+});
+final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>((ref) {
+  return HomeController(ref);
 });
 final descriptionProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();

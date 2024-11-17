@@ -20,7 +20,7 @@ class AuthenticationController extends StateNotifier<bool> {
   //     final response = await ref.read(authServiceProvider).settings();
   //     _settings = Settings.fromMap(response.data['data']);
   //     return true;
-  //   } catch (e) {
+  //   } catch (e) {å
   //     debugPrint(e.toString());
   //     return false;
   //   }

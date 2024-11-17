@@ -15,10 +15,18 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async{
   await Hive.initFlutter();
-  await Hive.openBox(AppConstants.appSettingsBox);
-  await Hive.openBox(AppConstants.userBox);
-  await Hive.openBox(AppConstants.petBehaviorBox);
-  await Hive.openBox(AppConstants.petBox);
+  if (!Hive.isBoxOpen(AppConstants.appSettingsBox)) {
+    await Hive.openBox(AppConstants.appSettingsBox);
+  }
+  if (!Hive.isBoxOpen(AppConstants.userBox)) {
+    await Hive.openBox(AppConstants.userBox);
+  }
+  if (!Hive.isBoxOpen(AppConstants.petBox)) {
+    await Hive.openBox(AppConstants.petBox);
+  }
+  if (!Hive.isBoxOpen(AppConstants.petBehaviorBox)) {
+    await Hive.openBox(AppConstants.petBehaviorBox);
+  }
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
