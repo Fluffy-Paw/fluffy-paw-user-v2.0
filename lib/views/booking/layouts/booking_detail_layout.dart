@@ -380,85 +380,207 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
   }
 
   Widget _buildDualActionButtons() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.all(20.w),
+  return Positioned(
+    bottom: 0,
+    left: 0,
+    right: 0,
+    child: Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: AppColor.whiteColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Progress indicator
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              children: [
+                _buildProgressStep(
+                  isCompleted: widget.booking.checkin,
+                  isActive: !widget.booking.checkin,
+                  label: 'Check-in',
+                  icon: Icons.login_rounded,
+                ),
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: widget.booking.checkin 
+                        ? Colors.green 
+                        : Colors.grey[300],
+                  ),
+                ),
+                _buildProgressStep(
+                  isCompleted: widget.booking.checkout,
+                  isActive: widget.booking.checkin && !widget.booking.checkout,
+                  label: 'Check-out',
+                  icon: Icons.logout_rounded,
+                ),
+              ],
+            ),
+          ),
+          Gap(20.h),
+          // Action buttons
+          if (!widget.booking.checkin)
+            _buildPrimaryButton(
+              'Check-in ngay',
+              Icons.login_rounded,
+              Colors.green,
+              () => _generateQRCode('Checkin', widget.booking.id),
+              isLoading: _isLoading,
+            )
+          else if (!widget.booking.checkout)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildOutlinedButton(
+                    'Xem trạng thái',
+                    Icons.map_outlined,
+                    AppColor.violetColor,
+                    () {
+                      // Add tracking navigation
+                    },
+                  ),
+                ),
+                Gap(12.w),
+                Expanded(
+                  child: _buildPrimaryButton(
+                    'Check-out',
+                    Icons.logout_rounded,
+                    Colors.blue,
+                    () => _generateQRCode('Checkout', widget.booking.id),
+                    isLoading: _isLoading,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    ),
+  );
+}
+Widget _buildProgressStep({
+  required bool isCompleted,
+  required bool isActive,
+  required String label,
+  required IconData icon,
+}) {
+  final color = isCompleted 
+      ? Colors.green 
+      : (isActive ? AppColor.violetColor : Colors.grey[400]);
+      
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
-          color: AppColor.whiteColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+          color: color?.withOpacity(0.1),
+          shape: BoxShape.circle,
         ),
-        child: Row(
-          children: [
-            // Tracking Button
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Add tracking functionality here
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.violetColor,
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Tracking',
-                  style: AppTextStyle(context).buttonText.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-            ),
-            Gap(12.w), // Add spacing between buttons
-            // Check-out Button
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () => _generateQRCode('Checkout', widget.booking.id),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        height: 20.h,
-                        width: 20.h,
-                        child: const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        'Check-out',
-                        style: AppTextStyle(context).buttonText.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-              ),
-            ),
-          ],
+        child: Icon(
+          isCompleted ? Icons.check : icon,
+          color: color,
+          size: 24.sp,
         ),
       ),
-    );
-  }
+      Gap(8.h),
+      Text(
+        label,
+        style: AppTextStyle(context).bodyTextSmall.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildPrimaryButton(
+  String text,
+  IconData icon,
+  Color color,
+  VoidCallback onPressed, {
+  bool isLoading = false,
+}) {
+  return ElevatedButton(
+    onPressed: isLoading ? null : onPressed,
+    style: ElevatedButton.styleFrom(
+      backgroundColor: color,
+      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      elevation: 0,
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (isLoading)
+          SizedBox(
+            height: 20.h,
+            width: 20.h,
+            child: const CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          )
+        else ...[
+          Icon(icon, color: Colors.white, size: 20.sp),
+          Gap(8.w),
+          Text(
+            text,
+            style: AppTextStyle(context).buttonText.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+Widget _buildOutlinedButton(
+  String text,
+  IconData icon,
+  Color color,
+  VoidCallback onPressed,
+) {
+  return OutlinedButton(
+    onPressed: onPressed,
+    style: OutlinedButton.styleFrom(
+      side: BorderSide(color: color),
+      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: color, size: 20.sp),
+        Gap(8.w),
+        Text(
+          text,
+          style: AppTextStyle(context).buttonText.copyWith(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildCancelButton() {
     return Positioned(

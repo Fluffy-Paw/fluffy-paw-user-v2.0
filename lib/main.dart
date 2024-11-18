@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:fluffypawuser/config/app_constants.dart';
+import 'package:fluffypawuser/config/env_config.dart';
 import 'package:fluffypawuser/config/theme.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
 import 'package:fluffypawuser/routes.dart';
@@ -27,8 +28,10 @@ void main() async{
   if (!Hive.isBoxOpen(AppConstants.petBehaviorBox)) {
     await Hive.openBox(AppConstants.petBehaviorBox);
   }
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await EnvConfig.init();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   
 

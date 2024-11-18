@@ -5,6 +5,7 @@ import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/store/store_model.dart';
 import 'package:fluffypawuser/models/store/store_service_model.dart';
 import 'package:fluffypawuser/views/store/choose_pet_for_booking_view.dart';
+import 'package:fluffypawuser/views/store/components/store_location_map.dart';
 import 'package:fluffypawuser/views/store/layouts/booking_time_selection_layout.dart';
 import 'package:fluffypawuser/views/store/layouts/choose_pet_for_booking_layout.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,7 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
     super.initState();
     Future.microtask(() => _loadStoreData());
   }
+  
 
   Future<void> _loadStoreData() async {
     try {
@@ -429,49 +431,8 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
   }
 
   Widget _buildLocation(StoreModel store) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20.w),
-      height: 200.h,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
-        child: Stack(
-          children: [
-            Center(
-              child: Icon(Icons.map, size: 50.sp, color: Colors.grey),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.8),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-                child: Text(
-                  store.address,
-                  style: AppTextStyle(context).bodyText.copyWith(
-                        color: AppColor.whiteColor,
-                      ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  return StoreLocationWidget(store: store);
+}
 
   Widget _buildBottomBar() {
   final isHotelService = selectedService?.serviceTypeName.toLowerCase().contains('hotel') == true || 
