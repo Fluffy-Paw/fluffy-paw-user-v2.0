@@ -1,6 +1,7 @@
 import 'package:fluffypawuser/config/app_constants.dart';
 import 'package:fluffypawuser/controllers/authentication/authentication_controller.dart';
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
+import 'package:fluffypawuser/controllers/notification/notification_controller.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
 import 'package:fluffypawuser/controllers/profile/profile_controller.dart';
 import 'package:fluffypawuser/routes.dart';
@@ -52,8 +53,9 @@ class _SplashLayoutState extends ConsumerState<SplashLayout> {
 
       // Token valid, check role from token
       Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-      String? role = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-      
+      String? role = decodedToken[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
       if (role != "PetOwner") {
         // Invalid role
         await ref.read(hiveStoreService).removeAllData();
@@ -68,15 +70,28 @@ class _SplashLayoutState extends ConsumerState<SplashLayout> {
 
       // Test token validity with a real API call
       try {
-        await ref.read(profileController.notifier).getAccountDetails();
-        await ref.read(petController.notifier).getPetList();
+        await Future.wait([
+          ref.read(profileController.notifier).getAccountDetails(),
+          ref.read(petController.notifier).getPetList(),
+        ]);
+
+        // Add a delay before SignalR initialization
+        await Future.delayed(const Duration(seconds: 1));
+
+        // Initialize SignalR
+        if (mounted) {
+          await ref
+              .read(notificationControllerProvider.notifier)
+              .initializeSignalR();
+        }
 
         if (mounted) {
           context.nav.pushNamedAndRemoveUntil(Routes.core, (route) => false);
         }
       } catch (e) {
         debugPrint('API Error: $e');
-        if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+        if (e.toString().contains('401') ||
+            e.toString().contains('Unauthorized')) {
           // Token rejected by server
           await ref.read(hiveStoreService).removeAllData();
           if (mounted) {
@@ -97,40 +112,40 @@ class _SplashLayoutState extends ConsumerState<SplashLayout> {
   }
 
   @override
-void initState() {
-  super.initState();
-  Future.delayed(const Duration(seconds: 2), () async {
-    final token = await ref.read(hiveStoreService).getAuthToken();
-    
-    if (mounted) {
-      if (token == null) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          Routes.login,
-          (route) => false,
-        );
-      } else {
-        // Try to validate token and navigate accordingly
-        try {
-          ref.read(apiClientProvider).updateToken(token: token);
-          await ref.read(profileController.notifier).getAccountDetails();
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            Routes.core,
-            (route) => false,
-          );
-        } catch (e) {
-          // If there's an error (invalid token), navigate to login
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () async {
+      final token = await ref.read(hiveStoreService).getAuthToken();
+
+      if (mounted) {
+        if (token == null) {
           Navigator.pushNamedAndRemoveUntil(
             context,
             Routes.login,
             (route) => false,
           );
+        } else {
+          // Try to validate token and navigate accordingly
+          try {
+            ref.read(apiClientProvider).updateToken(token: token);
+            await ref.read(profileController.notifier).getAccountDetails();
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              Routes.core,
+              (route) => false,
+            );
+          } catch (e) {
+            // If there's an error (invalid token), navigate to login
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              Routes.login,
+              (route) => false,
+            );
+          }
         }
       }
-    }
-  });
-}
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

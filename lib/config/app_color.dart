@@ -81,4 +81,69 @@ class AppColor {
   static const Color processing = Color(0xFF3B82F6);
   static const Color delivering = Color(0xFFF529C8);
   static const Color delivered = Color(0xFF3BD804);
+
+  // Booking status colors
+  static const Color bookingPending = amber500;      
+  static const Color bookingAccepted = lime500;      
+  static const Color bookingOvertime = violetColor;  
+  static const Color bookingEnded = blue500;         
+  static const Color bookingCanceled = redColor;
+
+  // Background colors for booking status (opacity 0.12)
+  static Color getStatusBgColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return bookingPending.withOpacity(0.12);
+      case 'accepted':
+        return bookingAccepted.withOpacity(0.12);
+      case 'overtime':
+        return bookingOvertime.withOpacity(0.12);
+      case 'ended':
+        return bookingEnded.withOpacity(0.12);
+      case 'canceled':
+        return bookingCanceled.withOpacity(0.12);
+      default:
+        return greyColor.withOpacity(0.12);
+    }
+  }
+
+  // Booking status list for filters
+  static final List<Map<String, dynamic>> bookingStatusFilters = [
+    {
+      'id': 'all',
+      'label': 'Tất cả',
+      'icon': Icons.all_inbox,
+      'color': violetColor
+    },
+    {
+      'id': 'pending',
+      'label': 'Chờ xác nhận',
+      'icon': Icons.pending_outlined,
+      'color': bookingPending
+    },
+    {
+      'id': 'accepted',
+      'label': 'Đã xác nhận',
+      'icon': Icons.check_circle_outline,
+      'color': bookingAccepted
+    },
+    {
+      'id': 'overtime',
+      'label': 'Quá giờ',
+      'icon': Icons.timer_off_outlined,
+      'color': bookingOvertime
+    },
+    {
+      'id': 'ended',
+      'label': 'Đã kết thúc',
+      'icon': Icons.task_alt,
+      'color': bookingEnded
+    },
+    {
+      'id': 'canceled',
+      'label': 'Đã hủy',
+      'icon': Icons.cancel_outlined,
+      'color': bookingCanceled
+    },
+  ];
 }

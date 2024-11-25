@@ -1,6 +1,7 @@
 class BookingModel {
   final int id;
   final int petId;
+  final String petName;
   final String serviceName;
   final String storeName;
   final String address;
@@ -35,6 +36,7 @@ class BookingModel {
     required this.checkout,
     this.checkOutTime,
     required this.status,
+    required this.petName
   });
 
   factory BookingModel.fromMap(Map<String, dynamic> map) {
@@ -58,6 +60,7 @@ class BookingModel {
           ? DateTime.parse(map['checkOutTime'])
           : null,
       status: map['status'],
+      petName: map['petName']
     );
   }
 
@@ -79,6 +82,7 @@ class BookingModel {
       'checkinTime': checkinTime.toIso8601String(),
       'checkout': checkout,
       'status': status,
+      'petName': petName
     };
 
     if (checkOutTime != null && checkOutTime!.toIso8601String() != "0001-01-01T00:00:00+00:00") {

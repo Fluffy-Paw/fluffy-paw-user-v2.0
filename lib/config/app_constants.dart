@@ -39,6 +39,15 @@ class AppConstants {
   static const String createBooking= '$baseUrl/api/PetOwner/CreateBooking';
   static const String createBookingTimeSelection='$baseUrl/api/PetOwner/CreateBookingTimeSelection';
   static const String cancelBooking ='$baseUrl/api/PetOwner/CancelBooking';
+  //Tracking
+  static const String getAllTrackingByBookingId='$baseUrl//api/PetOwner/GetAllTrackingByBookingId';
+  //Notification
+  static const String notificationHub='$baseUrl/NotificationHub';
+  //Rating
+  static const String createRatingForBooking='$baseUrl/api/Booking/CreateBookingRatingByBookingId';
+  static const String updateRatingForBooking='$baseUrl/api/Booking/UpdateBookingRatingById';
+  static const String getRatingByRatingId='$baseUrl/api/Booking/GetBookingRatingById';
+
 
   
 
@@ -50,6 +59,7 @@ class AppConstants {
   static const String userBox = 'userBox';
   static const String petBox = 'petBox';
   static const String petBehaviorBox = 'petBehaviorBox';
+  static const String notificationBox ='notificationBox';
 
   // Settings Variable Names
   static const String appLocal = 'appLocal';

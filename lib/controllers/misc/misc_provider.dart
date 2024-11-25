@@ -1,5 +1,7 @@
 import 'package:fluffypawuser/controllers/home/home_controller.dart';
+import 'package:fluffypawuser/controllers/notification/notification_controller.dart';
 import 'package:fluffypawuser/models/home/home_data_state.dart';
+import 'package:fluffypawuser/models/notification/notification_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,4 +77,21 @@ final weightProvider = Provider<TextEditingController>((ref) {
 final microchipNumberProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();
   return controller;
+});
+final selectedFilterProvider = StateProvider<NotificationType?>((ref) => null);
+
+final filteredNotificationsProvider = Provider<List<PetNotification>>((ref) {
+  final state = ref.watch(notificationControllerProvider);
+  final filter = ref.watch(selectedFilterProvider);
+  
+  if (filter == null) return state.notifications;
+  return state.notifications.where((n) => n.type == filter).toList();
+});
+
+final unreadCountProvider = Provider.family<int, NotificationType?>((ref, type) {
+  return ref.watch(notificationControllerProvider.notifier).getUnreadCount(type);
+});
+
+final notificationCountProvider = Provider.family<int, NotificationType?>((ref, type) {
+  return ref.watch(notificationControllerProvider.notifier).getNotificationCount(type);
 });

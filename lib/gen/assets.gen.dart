@@ -9,6 +9,16 @@
 
 import 'package:flutter/widgets.dart';
 
+class $AssetsEnvGen {
+  const $AssetsEnvGen();
+
+  /// File path: assets/env/api_key.env
+  String get apiKey => 'assets/env/api_key.env';
+
+  /// List of all assets
+  List<String> get values => [apiKey];
+}
+
 class $AssetsImageGen {
   const $AssetsImageGen();
 
@@ -84,6 +94,9 @@ class $AssetsSvgGen {
   /// File path: assets/svg/logout.svg
   String get logout => 'assets/svg/logout.svg';
 
+  /// File path: assets/svg/notification.svg
+  String get notification => 'assets/svg/notification.svg';
+
   /// File path: assets/svg/pet.svg
   String get pet => 'assets/svg/pet.svg';
 
@@ -131,6 +144,7 @@ class $AssetsSvgGen {
         inbox,
         language,
         logout,
+        notification,
         pet,
         petGrooming,
         petHotel,
@@ -146,6 +160,7 @@ class $AssetsSvgGen {
 class Assets {
   Assets._();
 
+  static const $AssetsEnvGen env = $AssetsEnvGen();
   static const $AssetsImageGen image = $AssetsImageGen();
   static const $AssetsSvgGen svg = $AssetsSvgGen();
 }

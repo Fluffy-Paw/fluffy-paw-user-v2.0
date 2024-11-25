@@ -5,8 +5,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 void addApiInterceptors(Dio dio) {
-  dio.options.connectTimeout = const Duration(seconds: 20);
-  dio.options.receiveTimeout = const Duration(seconds: 10);
+  dio.options.connectTimeout = const Duration(seconds: 120);
+  dio.options.receiveTimeout = const Duration(seconds: 120);
   dio.options.headers['Accept'] = 'application/json';
   // logger
   dio.interceptors.add(PrettyDioLogger(

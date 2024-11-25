@@ -3,6 +3,7 @@ import 'package:fluffypawuser/views/authentication/phone_view.dart';
 import 'package:fluffypawuser/views/booking/layouts/booking_history_layout.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/bottom_navigation_bar_view.dart';
 import 'package:fluffypawuser/views/home_screen/layouts/home_layout.dart';
+import 'package:fluffypawuser/views/notification/notification_view.dart';
 import 'package:fluffypawuser/views/pet/add_vaccine_view.dart';
 import 'package:fluffypawuser/views/pet/create_pet_view.dart';
 import 'package:fluffypawuser/views/pet/pet_detail_view.dart';
@@ -40,6 +41,7 @@ class Routes{
   static const bookingHistory="/bookingHistory";
   static const register="/register";
   static const profile="/profile";
+  static const notification="/notification";
   
 }
 Route generatedRoutes(RouteSettings settings){
@@ -49,6 +51,8 @@ Route generatedRoutes(RouteSettings settings){
     case Routes.splash:
       child = const SplashView();
       break;
+    case Routes.notification:
+      child = const NotificationView();
     case Routes.login:
       child = const LoginView();
       break;

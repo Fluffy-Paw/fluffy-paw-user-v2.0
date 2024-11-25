@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class HiveController {
+  static const String viewedBookingsKey = 'viewed_bookings';
   final Ref ref;
 
   HiveController(this.ref);
@@ -95,6 +96,21 @@ class HiveController {
         .map(
             (data) => BehaviorCategory.fromMap(Map<String, dynamic>.from(data)))
         .toList();
+  }
+  Future<void> markBookingAsViewed(int bookingId) async {
+    final box = await Hive.openBox('appBox');
+    List<String> viewedBookings = box.get(viewedBookingsKey, defaultValue: <String>[]).cast<String>();
+    if (!viewedBookings.contains(bookingId.toString())) {
+      viewedBookings.add(bookingId.toString());
+      await box.put(viewedBookingsKey, viewedBookings);
+    }
+  }
+
+  // Kiểm tra booking đã xem chưa  
+  Future<bool> hasViewedBooking(int bookingId) async {
+    final box = await Hive.openBox('appBox');
+    List<String> viewedBookings = box.get(viewedBookingsKey, defaultValue: <String>[]).cast<String>();
+    return viewedBookings.contains(bookingId.toString());
   }
 
 

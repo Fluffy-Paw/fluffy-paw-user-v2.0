@@ -321,6 +321,49 @@ class _HomeState extends ConsumerState<HomeLayout> {
               ),
             ),
           ),
+          Positioned(
+          top: MediaQuery.of(context).padding.top + 10,
+          right: 20.w,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pushNamed(Routes.notification),
+            child: Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  SvgPicture.asset(
+                    Assets.svg.notification, // Assuming you have bell.svg in assets
+                    width: 24.w,
+                    height: 24.w,
+                    color: colors(context).primaryColor,
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 8.w,
+                      height: 8.w,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
           // Content
           SafeArea(
             bottom: false,

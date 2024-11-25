@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
+import 'package:fluffypawuser/views/tracking/tracking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -143,86 +144,36 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
       ),
       body: Stack(
         children: [
+          // Content Scrollable
           SingleChildScrollView(
+            padding:
+                EdgeInsets.only(bottom: 100.h), // Add padding for bottom button
             child: Column(
               children: [
-                // Status Card
                 _buildStatusCard(),
                 _buildCheckInOutStatus(),
-
-                // Service Details
                 _buildSectionCard(
                   'Thông tin dịch vụ',
                   [
-                    _buildInfoRow(
-                      'Cửa hàng',
-                      widget.booking.storeName,
-                      icon: Icons.store,
-                    ),
-                    _buildInfoRow(
-                      'Dịch vụ',
-                      widget.booking.serviceName,
-                      icon: Icons.pets,
-                    ),
-                    _buildInfoRow(
-                      'Địa chỉ',
-                      widget.booking.address,
-                      icon: Icons.location_on_outlined,
-                    ),
+                    _buildInfoRow('Mã Đặt Chỗ', widget.booking.id.toString(),
+                        icon: Icons.store),
+                    _buildInfoRow('Cửa hàng', widget.booking.storeName,
+                        icon: Icons.store),
+                    _buildInfoRow('Dịch vụ', widget.booking.serviceName,
+                        icon: Icons.pets),
+                    _buildInfoRow('Địa chỉ', widget.booking.address,
+                        icon: Icons.location_on_outlined),
                   ],
                 ),
-
-                // Time Details
                 _buildSectionCard(
-                  'Thông tin thời gian',
+                  'Thông tin thú cưng',
                   [
-                    _buildInfoRow(
-                      'Ngày đặt',
-                      DateFormat('dd/MM/yyyy HH:mm')
-                          .format(widget.booking.createDate),
-                      icon: Icons.event_note,
-                    ),
-                    _buildInfoRow(
-                      'Thời gian bắt đầu',
-                      DateFormat('dd/MM/yyyy HH:mm')
-                          .format(widget.booking.startTime),
-                      icon: Icons.schedule,
-                    ),
-                    _buildInfoRow(
-                      'Thời gian kết thúc',
-                      DateFormat('dd/MM/yyyy HH:mm')
-                          .format(widget.booking.endTime),
-                      icon: Icons.timer_off,
-                    ),
+                    _buildInfoRow('Tên thú cưng', widget.booking.petName,
+                        icon: Icons.pets),
+                    _buildInfoRow('Mã thú cưng', '#${widget.booking.petId}',
+                        icon: Icons.tag),
                   ],
                 ),
-
-                // Check-in/out Details
-                if (widget.booking.checkin || widget.booking.checkout)
-                  _buildSectionCard(
-                    'Thông tin Check-in/out',
-                    [
-                      if (widget.booking.checkin)
-                        _buildInfoRow(
-                          'Check-in',
-                          DateFormat('dd/MM/yyyy HH:mm')
-                              .format(widget.booking.checkinTime),
-                          icon: Icons.login,
-                          iconColor: Colors.green,
-                        ),
-                      if (widget.booking.checkout &&
-                          widget.booking.checkOutTime != null)
-                        _buildInfoRow(
-                          'Check-out',
-                          DateFormat('dd/MM/yyyy HH:mm')
-                              .format(widget.booking.checkOutTime!),
-                          icon: Icons.logout,
-                          iconColor: Colors.red,
-                        ),
-                    ],
-                  ),
-
-                // Payment Details
                 _buildSectionCard(
                   'Thông tin thanh toán',
                   [
@@ -230,359 +181,164 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
                       'Phương thức',
                       widget.booking.paymentMethod,
                       icon: Icons.payment,
+                      valueStyle: AppTextStyle(context).bodyText.copyWith(
+                            color: AppColor.violetColor,
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                     _buildInfoRow(
                       'Tổng tiền',
                       '${NumberFormat('#,###', 'vi_VN').format(widget.booking.cost)}đ',
-                      icon: Icons.monetization_on,
-                      valueStyle: AppTextStyle(context).title.copyWith(
+                      icon: Icons.monetization_on_outlined,
+                      valueStyle: AppTextStyle(context).bodyText.copyWith(
                             color: AppColor.violetColor,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16.sp,
                           ),
+                    ),
+                    if (widget.booking.description.isNotEmpty)
+                      _buildInfoRow('Ghi chú', widget.booking.description,
+                          icon: Icons.description_outlined),
+                  ],
+                ),
+                _buildSectionCard(
+                  'Thời gian dịch vụ',
+                  [
+                    _buildInfoRow(
+                      'Bắt đầu',
+                      _formatDateTime(widget.booking.startTime.toString()),
+                      icon: Icons.schedule,
+                    ),
+                    _buildInfoRow(
+                      'Kết thúc',
+                      _formatDateTime(widget.booking.endTime.toString()),
+                      icon: Icons.schedule_outlined,
                     ),
                   ],
                 ),
-
-                // Additional Info
-                if (widget.booking.description.isNotEmpty)
-                  _buildSectionCard(
-                    'Ghi chú',
-                    [
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Text(
-                          widget.booking.description,
-                          style: AppTextStyle(context).bodyText.copyWith(
-                                color: Colors.grey[700],
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                // Extra space for the button
-                Gap(100.h),
               ],
             ),
           ),
 
-          // Cancel Button
-          if (widget.booking.status.toLowerCase() == 'pending')
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  color: AppColor.whiteColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: _isCancelling
-                      ? null
-                      : () async {
-                          final shouldCancel = await _showCancelConfirmation();
-                          if (shouldCancel == true) {
-                            await _cancelBooking();
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    elevation: 0,
+          // Bottom Action Buttons
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    offset: Offset(0, -2),
+                    blurRadius: 10,
                   ),
-                  child: _isCancelling
-                      ? SizedBox(
-                          height: 20.h,
-                          width: 20.h,
-                          child: const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Hủy đặt lịch',
-                          style: AppTextStyle(context).buttonText.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 12.h),
+                  child: _buildBottomButtons(),
                 ),
               ),
             ),
-          if (widget.booking.status.toLowerCase() == 'pending')
-            _buildCancelButton()
-          else if (widget.booking.status.toLowerCase() == 'accepted' &&
-              !widget.booking.checkin)
-            _buildActionButton(
-              'Check-in',
-              Colors.green,
-              () => _generateQRCode('Checkin', widget.booking.id),
-            )
-          else if (widget.booking.checkin && !widget.booking.checkout)
-            _buildDualActionButtons(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(String text, Color color, VoidCallback onPressed) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: AppColor.whiteColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+  Widget _buildBottomButtons() {
+    if (widget.booking.status.toLowerCase() == 'pending') {
+      return _buildCancelButton();
+    } else if (widget.booking.status.toLowerCase() == 'accepted' &&
+        !widget.booking.checkin) {
+      return Container(
+        width: double.infinity,
+        child: _buildActionButton(
+          'Check-in ngay',
+          Icons.login_rounded,
+          Colors.green,
+          () => _generateQRCode('Checkin', widget.booking.id),
+        ),
+      );
+    } else if (widget.booking.checkin && !widget.booking.checkout) {
+      return Row(
+        children: [
+          Expanded(
+            child: _buildOutlinedButton(
+              'Xem trạng thái',
+              Icons.map_outlined,
+              AppColor.violetColor,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        TrackingScreen(bookingId: widget.booking.id),
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: _buildActionButton(
+              'Check-out',
+              Icons.logout_rounded,
+              Colors.blue,
+              () => _generateQRCode('Checkout', widget.booking.id),
+            ),
           ),
         ],
-      ),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          elevation: 0,
+      );
+    }
+    return SizedBox.shrink();
+  }
+
+  Widget _buildActionButton(
+      String text, IconData icon, Color color, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
         ),
-        child: _isLoading
-            ? SizedBox(
-                height: 20.h,
-                width: 20.h,
-                child: const CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(
-                text,
-                style: AppTextStyle(context).buttonText.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+        elevation: 0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (_isLoading)
+            SizedBox(
+              height: 20.h,
+              width: 20.h,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
               ),
+            )
+          else ...[
+            Icon(icon, color: Colors.white, size: 20.sp),
+            SizedBox(width: 8.w),
+            Text(
+              text,
+              style: AppTextStyle(context).buttonText.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
   Widget _buildDualActionButtons() {
-  return Positioned(
-    bottom: 0,
-    left: 0,
-    right: 0,
-    child: Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: AppColor.whiteColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Progress indicator
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Row(
-              children: [
-                _buildProgressStep(
-                  isCompleted: widget.booking.checkin,
-                  isActive: !widget.booking.checkin,
-                  label: 'Check-in',
-                  icon: Icons.login_rounded,
-                ),
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: widget.booking.checkin 
-                        ? Colors.green 
-                        : Colors.grey[300],
-                  ),
-                ),
-                _buildProgressStep(
-                  isCompleted: widget.booking.checkout,
-                  isActive: widget.booking.checkin && !widget.booking.checkout,
-                  label: 'Check-out',
-                  icon: Icons.logout_rounded,
-                ),
-              ],
-            ),
-          ),
-          Gap(20.h),
-          // Action buttons
-          if (!widget.booking.checkin)
-            _buildPrimaryButton(
-              'Check-in ngay',
-              Icons.login_rounded,
-              Colors.green,
-              () => _generateQRCode('Checkin', widget.booking.id),
-              isLoading: _isLoading,
-            )
-          else if (!widget.booking.checkout)
-            Row(
-              children: [
-                Expanded(
-                  child: _buildOutlinedButton(
-                    'Xem trạng thái',
-                    Icons.map_outlined,
-                    AppColor.violetColor,
-                    () {
-                      // Add tracking navigation
-                    },
-                  ),
-                ),
-                Gap(12.w),
-                Expanded(
-                  child: _buildPrimaryButton(
-                    'Check-out',
-                    Icons.logout_rounded,
-                    Colors.blue,
-                    () => _generateQRCode('Checkout', widget.booking.id),
-                    isLoading: _isLoading,
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    ),
-  );
-}
-Widget _buildProgressStep({
-  required bool isCompleted,
-  required bool isActive,
-  required String label,
-  required IconData icon,
-}) {
-  final color = isCompleted 
-      ? Colors.green 
-      : (isActive ? AppColor.violetColor : Colors.grey[400]);
-      
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: color?.withOpacity(0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          isCompleted ? Icons.check : icon,
-          color: color,
-          size: 24.sp,
-        ),
-      ),
-      Gap(8.h),
-      Text(
-        label,
-        style: AppTextStyle(context).bodyTextSmall.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ],
-  );
-}
-
-Widget _buildPrimaryButton(
-  String text,
-  IconData icon,
-  Color color,
-  VoidCallback onPressed, {
-  bool isLoading = false,
-}) {
-  return ElevatedButton(
-    onPressed: isLoading ? null : onPressed,
-    style: ElevatedButton.styleFrom(
-      backgroundColor: color,
-      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      elevation: 0,
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (isLoading)
-          SizedBox(
-            height: 20.h,
-            width: 20.h,
-            child: const CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
-            ),
-          )
-        else ...[
-          Icon(icon, color: Colors.white, size: 20.sp),
-          Gap(8.w),
-          Text(
-            text,
-            style: AppTextStyle(context).buttonText.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ],
-    ),
-  );
-}
-
-Widget _buildOutlinedButton(
-  String text,
-  IconData icon,
-  Color color,
-  VoidCallback onPressed,
-) {
-  return OutlinedButton(
-    onPressed: onPressed,
-    style: OutlinedButton.styleFrom(
-      side: BorderSide(color: color),
-      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: color, size: 20.sp),
-        Gap(8.w),
-        Text(
-          text,
-          style: AppTextStyle(context).buttonText.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-  Widget _buildCancelButton() {
     return Positioned(
       bottom: 0,
       left: 0,
@@ -591,6 +347,10 @@ Widget _buildOutlinedButton(
         padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
           color: AppColor.whiteColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -599,39 +359,240 @@ Widget _buildOutlinedButton(
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: _isCancelling
-              ? null
-              : () async {
-                  final shouldCancel = await _showCancelConfirmation();
-                  if (shouldCancel == true) {
-                    await _cancelBooking();
-                  }
-                },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            padding: EdgeInsets.symmetric(vertical: 16.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            elevation: 0,
-          ),
-          child: _isCancelling
-              ? SizedBox(
-                  height: 20.h,
-                  width: 20.h,
-                  child: const CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Progress Steps
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildProgressStep(
+                    isCompleted: widget.booking.checkin,
+                    isActive: !widget.booking.checkin,
+                    label: 'Check-in',
+                    icon: Icons.login_rounded,
                   ),
-                )
-              : Text(
-                  'Hủy đặt lịch',
-                  style: AppTextStyle(context).buttonText.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      margin: EdgeInsets.symmetric(horizontal: 8.w),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: widget.booking.checkin
+                              ? [Colors.green, Colors.blue]
+                              : [Colors.grey[300]!, Colors.grey[300]!],
+                        ),
                       ),
+                    ),
+                  ),
+                  _buildProgressStep(
+                    isCompleted: widget.booking.checkout,
+                    isActive:
+                        widget.booking.checkin && !widget.booking.checkout,
+                    label: 'Check-out',
+                    icon: Icons.logout_rounded,
+                  ),
+                ],
+              ),
+            ),
+            Gap(16.h),
+            // Action Buttons
+            if (!widget.booking.checkin)
+              _buildPrimaryButton(
+                'Check-in ngay',
+                Icons.login_rounded,
+                Colors.green,
+                () => _generateQRCode('Checkin', widget.booking.id),
+              )
+            else if (!widget.booking.checkout)
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildOutlinedButton(
+                      'Xem trạng thái',
+                      Icons.map_outlined,
+                      AppColor.violetColor,
+                      () {
+                        // Navigation logic here
+                      },
+                    ),
+                  ),
+                  Gap(12.w),
+                  Expanded(
+                    child: _buildPrimaryButton(
+                      'Check-out',
+                      Icons.logout_rounded,
+                      Colors.blue,
+                      () => _generateQRCode('Checkout', widget.booking.id),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressStep({
+    required bool isCompleted,
+    required bool isActive,
+    required String label,
+    required IconData icon,
+  }) {
+    final color = isCompleted
+        ? Colors.green
+        : (isActive ? AppColor.violetColor : Colors.grey[400]);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: color?.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            isCompleted ? Icons.check : icon,
+            color: color,
+            size: 24.sp,
+          ),
+        ),
+        Gap(8.h),
+        Text(
+          label,
+          style: AppTextStyle(context).bodyTextSmall.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrimaryButton(
+    String text,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        elevation: 2,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (_isLoading)
+            SizedBox(
+              height: 20.h,
+              width: 20.h,
+              child: const CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          else ...[
+            Icon(icon, color: Colors.white, size: 20.sp),
+            Gap(8.w),
+            Text(
+              text,
+              style: AppTextStyle(context).buttonText.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOutlinedButton(
+    String text,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: color, width: 2),
+        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 20.sp),
+          Gap(8.w),
+          Text(
+            text,
+            style: AppTextStyle(context).buttonText.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return Container(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isCancelling
+            ? null
+            : () async {
+                final shouldCancel = await _showCancelConfirmation();
+                if (shouldCancel == true) {
+                  await _cancelBooking();
+                }
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_isCancelling)
+              SizedBox(
+                height: 20.h,
+                width: 20.h,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            else ...[
+              Icon(Icons.cancel_outlined, color: Colors.white, size: 20.sp),
+              SizedBox(width: 8.w),
+              Text(
+                'Hủy đặt lịch',
+                style: AppTextStyle(context).buttonText.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -897,19 +858,42 @@ Widget _buildOutlinedButton(
           Gap(12.h),
           _buildInfoRow(
             'Check-in',
-            widget.booking.checkin ? 'Đã check-in' : 'Chưa check-in',
+            widget.booking.checkin
+                ? 'Đã check-in vào lúc ${_formatDateTime(widget.booking.checkinTime.toString())}'
+                : 'Chưa check-in',
             icon: Icons.login,
             iconColor: widget.booking.checkin ? Colors.green : Colors.grey,
           ),
           _buildInfoRow(
             'Check-out',
-            widget.booking.checkout ? 'Đã check-out' : 'Chưa check-out',
+            widget.booking.checkout
+                ? 'Đã check-out vào lúc ${_formatDateTime(widget.booking.checkOutTime.toString())}'
+                : 'Chưa check-out',
             icon: Icons.logout,
             iconColor: widget.booking.checkout ? Colors.green : Colors.grey,
           ),
         ],
       ),
     );
+  }
+
+  String _formatDateTime(String? dateTimeStr) {
+    if (dateTimeStr == null) return '';
+
+    try {
+      // Parse ISO date string
+      final dateTime = DateTime.parse(dateTimeStr);
+
+      // Format date and time
+      return DateFormat('HH:mm - dd/MM/yyyy').format(dateTime);
+
+      // Hoặc format khác tùy bạn muốn:
+      // return DateFormat('HH:mm, dd tháng MM, yyyy').format(dateTime);
+      // return DateFormat('HH:mm dd/MM/yyyy').format(dateTime);
+    } catch (e) {
+      print('Error parsing date: $e');
+      return dateTimeStr; // Return original string if parsing fails
+    }
   }
 
   Widget _buildInfoRow(
