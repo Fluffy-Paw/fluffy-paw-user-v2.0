@@ -29,12 +29,26 @@ class $AssetsImageGen {
   AssetGenImage get background =>
       const AssetGenImage('assets/image/background.jpg');
 
+  /// File path: assets/image/ks-cho-meo500-5587-1549156792.jpg
+  AssetGenImage get ksChoMeo50055871549156792 =>
+      const AssetGenImage('assets/image/ks-cho-meo500-5587-1549156792.jpg');
+
+  /// File path: assets/image/medium-shot-girl-petting-dog-bed.jpg
+  AssetGenImage get mediumShotGirlPettingDogBed =>
+      const AssetGenImage('assets/image/medium-shot-girl-petting-dog-bed.jpg');
+
   /// File path: assets/image/question.png
   AssetGenImage get question =>
       const AssetGenImage('assets/image/question.png');
 
   /// List of all assets
-  List<AssetGenImage> get values => [avatar, background, question];
+  List<AssetGenImage> get values => [
+        avatar,
+        background,
+        ksChoMeo50055871549156792,
+        mediumShotGirlPettingDogBed,
+        question
+      ];
 }
 
 class $AssetsSvgGen {

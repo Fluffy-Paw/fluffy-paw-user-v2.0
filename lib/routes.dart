@@ -15,39 +15,41 @@ import 'package:fluffypawuser/views/splash_screen/splash_view.dart';
 import 'package:fluffypawuser/views/store/choose_pet_for_booking_view.dart';
 import 'package:fluffypawuser/views/store/store_detail_view.dart';
 import 'package:fluffypawuser/views/store/store_list_view.dart';
+import 'package:fluffypawuser/views/store/store_service_by_service_type_view.dart';
 import 'package:fluffypawuser/views/wallet/top_up_view.dart';
 import 'package:fluffypawuser/views/wallet/wallet_view.dart';
 import 'package:fluffypawuser/views/wallet/withdraw_view.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
 
-class Routes{
+class Routes {
   Routes._();
   static const splash = '/';
   static const login = '/login';
   static const core = '/core';
   static const selectPetType = '/selectPetType';
   static const createPet = '/createPet';
-  static const petList ="/petList";
-  static const petDetail ="/petDetail";
-  static const storeListByService ="/storeListByService";
-  static const storeDetail ="/storeDetail";
-  static const choosePetForBooking ="/choosePetForBooking";
-  static const addVaccine ="/addVaccine";
-  static const vaccineDetail ="/vaccineDetail";
-  static const wallet="/wallet";
-  static const topUp="/topUp";
-  static const withdraw="/withdraw";
-  static const bookingHistory="/bookingHistory";
-  static const register="/register";
-  static const profile="/profile";
-  static const notification="/notification";
-  
+  static const petList = "/petList";
+  static const petDetail = "/petDetail";
+  static const storeListByService = "/storeListByService";
+  static const storeDetail = "/storeDetail";
+  static const choosePetForBooking = "/choosePetForBooking";
+  static const addVaccine = "/addVaccine";
+  static const vaccineDetail = "/vaccineDetail";
+  static const wallet = "/wallet";
+  static const topUp = "/topUp";
+  static const withdraw = "/withdraw";
+  static const bookingHistory = "/bookingHistory";
+  static const register = "/register";
+  static const profile = "/profile";
+  static const notification = "/notification";
+  static const storeServiceByType = "/storeServiceByType";
 }
-Route generatedRoutes(RouteSettings settings){
+
+Route generatedRoutes(RouteSettings settings) {
   Widget child;
 
-  switch(settings.name){
+  switch (settings.name) {
     case Routes.splash:
       child = const SplashView();
       break;
@@ -82,7 +84,13 @@ Route generatedRoutes(RouteSettings settings){
       break;
     case Routes.choosePetForBooking:
       final serviceTypeId = settings.arguments as int;
-      child = ChoosePetForBookingView(serviceTypeId: serviceTypeId);
+      final timeSlotId = settings.arguments as int;
+      final storeId = settings.arguments as int;
+      child = ChoosePetForBookingView(
+        serviceTypeId: serviceTypeId,
+        timeSlotId: timeSlotId,
+        storeId: storeId,
+      );
       break;
     case Routes.createPet:
       final id = settings.arguments as int;
@@ -95,15 +103,26 @@ Route generatedRoutes(RouteSettings settings){
     case Routes.vaccineDetail:
       final id = settings.arguments as int;
       child = VaccineDetailView(id: id);
-      break; 
+      break;
     case Routes.storeDetail:
-      final id = settings.arguments as int;
-      child = StoreDetailView(serviceTypeId: id);
+      final args = settings.arguments as Map<String, dynamic>;
+      final serviceTypeId = args['serviceTypeId'] as int;
+      final isFromBookingScreen = args['isFromBookingScreen'] as int?;
+      child = StoreDetailView(
+        serviceTypeId: serviceTypeId,
+        isFromBookingScreen: isFromBookingScreen,
+      );
       break;
     case Routes.storeListByService:
-      // Handle StoreListArguments
       final args = settings.arguments as StoreListArguments;
       child = StoreListView(
+        serviceTypeId: args.serviceTypeId,
+        serviceTypeName: args.serviceTypeName,
+      );
+      break;
+    case Routes.storeServiceByType:
+      final args = settings.arguments as StoreListArguments;
+      child = StoreServiceByServiceTypeView(
         serviceTypeId: args.serviceTypeId,
         serviceTypeName: args.serviceTypeName,
       );
@@ -113,7 +132,6 @@ Route generatedRoutes(RouteSettings settings){
       child = PetDetailView(petId: id);
       break;
     case Routes.core:
-      
       child = const BottomNavigationBarView();
       break;
     default:

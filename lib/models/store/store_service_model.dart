@@ -9,7 +9,7 @@ class StoreServiceModel {
   final int cost;
   final String description;
   final int bookingCount;
-  final int totalRating;
+  final double totalRating;
   final bool status;
   final String serviceTypeName;
   final List<Certificate> certificate;
@@ -43,7 +43,7 @@ class StoreServiceModel {
       cost: map['cost'],
       description: map['description'],
       bookingCount: map['bookingCount'],
-      totalRating: map['totalRating'],
+      totalRating: (map['totalRating'] ?? 0).toDouble(),
       status: map['status'],
       serviceTypeName: map['serviceTypeName'],
       certificate: (map['certificate'] as List)

@@ -4,6 +4,7 @@ import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/store/service_time_model.dart';
 import 'package:fluffypawuser/views/store/layouts/booking_confirmation_layout.dart';
+import 'package:fluffypawuser/views/store/layouts/choose_pet_for_booking_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,11 +14,13 @@ import 'package:intl/intl.dart';
 class ServiceTimeLayout extends ConsumerStatefulWidget {
   final int storeServiceId;
   final List<int> selectedPetIds;
+  final int storeId;
 
   const ServiceTimeLayout({
     super.key,
     required this.storeServiceId,
     required this.selectedPetIds,
+    required this.storeId
   });
 
   @override
@@ -39,7 +42,7 @@ class _ServiceTimeLayoutState extends ConsumerState<ServiceTimeLayout> {
   }
 
   Future<void> _loadServiceTimes() async {
-    await ref.read(storeController.notifier).getServiceTime(widget.storeServiceId);
+    await ref.read(storeController.notifier).getServiceTimeWithStoreId(widget.storeServiceId, widget.storeId);
     if (mounted) {
       setState(() {
         final allTimeSlots = ref.read(storeController.notifier).serviceTime ?? [];
@@ -62,14 +65,13 @@ class _ServiceTimeLayoutState extends ConsumerState<ServiceTimeLayout> {
 
   void _confirmSelection() {
   if (selectedTimeSlotId != null) {
-    // Thay vì pop về với time slot ID
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BookingConfirmationLayout(
-          selectedPetIds: widget.selectedPetIds,
+        builder: (context) => ChoosePetForBookingLayout(
+          serviceTypeId: widget.storeServiceId,
           timeSlotId: selectedTimeSlotId!,
-          storeServiceId: widget.storeServiceId,
+          storeId: widget.storeId,
         ),
       ),
     );
@@ -124,13 +126,13 @@ class _ServiceTimeLayoutState extends ConsumerState<ServiceTimeLayout> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Text(
-                                '${widget.selectedPetIds.length} thú cưng',
-                                style: AppTextStyle(context).bodyText.copyWith(
-                                  color: AppColor.violetColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              // Text(
+                              //   '${widget.selectedPetIds.length} thú cưng',
+                              //   style: AppTextStyle(context).bodyText.copyWith(
+                              //     color: AppColor.violetColor,
+                              //     fontWeight: FontWeight.w600,
+                              //   ),
+                              // ),
                             ],
                           ),
                           Gap(20.h),

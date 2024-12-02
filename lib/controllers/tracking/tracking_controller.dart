@@ -59,6 +59,7 @@ class TrackingController extends StateNotifier<AsyncValue<List<TrackingInfo>>> {
       }
     }
   }
+  
 }
 
 final trackingControllerProvider = StateNotifierProvider.family<TrackingController, AsyncValue<List<TrackingInfo>>, int>(

@@ -27,7 +27,11 @@ class StoreCard extends StatelessWidget {
         onTap: () {
           context.nav.pushNamed(
             Routes.storeDetail,
-            arguments: store.id,
+            arguments: {
+              'serviceTypeId':
+                  store.id, // Changed from storeId to serviceTypeId
+              'isFromBookingScreen': null,
+            },
           );
         },
         borderRadius: BorderRadius.circular(12.r),
@@ -83,9 +87,9 @@ class StoreCard extends StatelessWidget {
     return Text(
       store.name,
       style: AppTextStyle(context).subTitle.copyWith(
-        fontWeight: FontWeight.w600,
-        fontSize: 16.sp,
-      ),
+            fontWeight: FontWeight.w600,
+            fontSize: 16.sp,
+          ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
@@ -95,8 +99,8 @@ class StoreCard extends StatelessWidget {
     return Text(
       store.brandName,
       style: AppTextStyle(context).bodyTextSmall.copyWith(
-        color: AppColor.blackColor.withOpacity(0.6),
-      ),
+            color: AppColor.blackColor.withOpacity(0.6),
+          ),
     );
   }
 
@@ -109,8 +113,8 @@ class StoreCard extends StatelessWidget {
           child: Text(
             store.address,
             style: AppTextStyle(context).bodyTextSmall.copyWith(
-              color: AppColor.blackColor.withOpacity(0.8),
-            ),
+                  color: AppColor.blackColor.withOpacity(0.8),
+                ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -140,9 +144,9 @@ class StoreCard extends StatelessWidget {
           child: Text(
             store.status ? 'Mở cửa' : 'Đóng cửa',
             style: AppTextStyle(context).bodyTextSmall.copyWith(
-              color: store.status ? Colors.green : Colors.red,
-              fontSize: 12.sp,
-            ),
+                  color: store.status ? Colors.green : Colors.red,
+                  fontSize: 12.sp,
+                ),
           ),
         ),
       ],

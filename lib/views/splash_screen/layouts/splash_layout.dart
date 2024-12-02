@@ -75,16 +75,6 @@ class _SplashLayoutState extends ConsumerState<SplashLayout> {
           ref.read(petController.notifier).getPetList(),
         ]);
 
-        // Add a delay before SignalR initialization
-        await Future.delayed(const Duration(seconds: 1));
-
-        // Initialize SignalR
-        if (mounted) {
-          await ref
-              .read(notificationControllerProvider.notifier)
-              .initializeSignalR();
-        }
-
         if (mounted) {
           context.nav.pushNamedAndRemoveUntil(Routes.core, (route) => false);
         }
@@ -114,37 +104,7 @@ class _SplashLayoutState extends ConsumerState<SplashLayout> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () async {
-      final token = await ref.read(hiveStoreService).getAuthToken();
-
-      if (mounted) {
-        if (token == null) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            Routes.login,
-            (route) => false,
-          );
-        } else {
-          // Try to validate token and navigate accordingly
-          try {
-            ref.read(apiClientProvider).updateToken(token: token);
-            await ref.read(profileController.notifier).getAccountDetails();
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              Routes.core,
-              (route) => false,
-            );
-          } catch (e) {
-            // If there's an error (invalid token), navigate to login
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              Routes.login,
-              (route) => false,
-            );
-          }
-        }
-      }
-    });
+    initializeApp();
   }
 
   @override

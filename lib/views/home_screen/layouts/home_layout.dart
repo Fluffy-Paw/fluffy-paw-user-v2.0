@@ -474,16 +474,16 @@ class _HomeState extends ConsumerState<HomeLayout> {
           children: serviceTypes.map((service) {
             String iconPath;
             switch(service.name.toLowerCase()) {
-              case 'grooming':
+              case 'Chăm sóc & Làm đẹp':
                 iconPath = Assets.svg.petGrooming;
                 break;
-              case 'hotel':
+              case 'Khách sạn':
                 iconPath = Assets.svg.petHotel;
                 break;
-              case 'training':
+              case 'Đi dạo':
                 iconPath = Assets.svg.petTraining;
                 break;
-              case 'vaccine':
+              case 'Tiêm chủng':
                 iconPath = Assets.svg.petVaccine;
                 break;
               default:
@@ -497,7 +497,7 @@ class _HomeState extends ConsumerState<HomeLayout> {
                 () {
                   // Sử dụng context.nav để navigate với 2 arguments riêng biệt
                   context.nav.pushNamed(
-                    Routes.storeListByService,
+                    Routes.storeServiceByType,
                     arguments: StoreListArguments(
                       serviceTypeId: service.id,
                       serviceTypeName: service.name,

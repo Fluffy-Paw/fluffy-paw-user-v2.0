@@ -14,6 +14,11 @@ abstract class StoreProvider {
   Future<Response> getAllBooking();
   Future<Response> selectBookingTime(int petId, List<int> storeServiceIds, String paymentMethod, String description);
   Future<Response> cancelBooking(int bookingId);
+  Future<Response> getStoreServiceWithServiceType(int serviceTypeId);
+  Future<Response> getStoresByServiceId(int serviceId);
+  Future<Response> getBrandById(int brandId);
+  Future<Response> getServiceTimeWithStoreId(int serviceStoreId, int storeId);
+  Future<Response> getBookingById(int bookingId);
 
 
 }
@@ -53,10 +58,21 @@ class StoreServiceProvider implements StoreProvider {
     final response = ref.read(apiClientProvider).get('${AppConstants.getStoreServiceByStoreId}/$storeId');
     return response;
   }
+  @override
+  Future<Response> getStoreServiceWithServiceType(int serviceTypeId) {
+    final response = ref.read(apiClientProvider).get('${AppConstants.getAllServiceByServiceTypeIdDateTime}?serviceTypeId=$serviceTypeId');
+    return response;
+  }
   
   @override
   Future<Response> getServiceTime(int serviceStoreId) {
     final response = ref.read(apiClientProvider).get('${AppConstants.getAllStoreServiceByServiceId}/$serviceStoreId');
+    return response;
+  }
+
+  @override
+  Future<Response> getServiceTimeWithStoreId(int serviceStoreId, int storeId) {
+    final response = ref.read(apiClientProvider).get('${AppConstants.getAllStoreServiceByServiceIdStoreId}?serviceId=$serviceStoreId&storeId=$storeId');
     return response;
   }
   @override
@@ -79,6 +95,12 @@ class StoreServiceProvider implements StoreProvider {
         .get(AppConstants.getAllBooking);
     return response;
   }
+  @override
+  Future<Response> getBookingById(int bookingId) async {
+    final response = await ref.read(apiClientProvider)
+        .get('${AppConstants.getBookingById}/$bookingId');
+    return response;
+  }
   
   @override
   Future<Response> selectBookingTime(int petId, List<int> storeServiceIds, String paymentMethod, String description) async {
@@ -99,6 +121,20 @@ class StoreServiceProvider implements StoreProvider {
    final response = ref
         .read(apiClientProvider)
         .patch('${AppConstants.cancelBooking}/$bookingId');
+    return response;
+  }
+  @override
+  Future<Response> getStoresByServiceId(int serviceId) async {
+    final response = await ref
+        .read(apiClientProvider)
+        .get('${AppConstants.getAllStoreByServiceIdDateTime}?serviceId=$serviceId');
+    return response;
+  }
+  @override
+  Future<Response> getBrandById(int brandId) async {
+    final response = await ref
+        .read(apiClientProvider)
+        .get('${AppConstants.brandById}/$brandId');
     return response;
   }
 

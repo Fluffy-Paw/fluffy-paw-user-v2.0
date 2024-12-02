@@ -5,6 +5,7 @@ class NotificationState {
   final List<PetNotification> notifications;
   final String connectionStatus;
   final bool isLoading;
+  final String? error;
   final NotificationType? selectedFilter;
 
   NotificationState({
@@ -12,11 +13,13 @@ class NotificationState {
     this.connectionStatus = 'Disconnected',
     this.isLoading = true,
     this.selectedFilter,
+    this.error,
   });
 
   NotificationState copyWith({
     List<PetNotification>? notifications,
     String? connectionStatus,
+    String? error,
     bool? isLoading,
     NotificationType? selectedFilter,
   }) {
@@ -25,6 +28,7 @@ class NotificationState {
       connectionStatus: connectionStatus ?? this.connectionStatus,
       isLoading: isLoading ?? this.isLoading,
       selectedFilter: selectedFilter ?? this.selectedFilter,
+      error: error,
     );
   }
 

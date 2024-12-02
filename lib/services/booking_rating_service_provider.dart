@@ -9,8 +9,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 abstract class BookingRatingProvider {
   Future<Response> createRating(int bookingId, BookingRatingRequest request);
-  Future<Response> updateRating(int ratingId, BookingRatingRequest request);
+  Future<Response> updateRating(int ratingId, Map<String, dynamic> formData);
   Future<Response> getRating(int ratingId);
+  Future<Response> getAllRatingsByServiceId(int serviceId);
+  Future<Response> getAllRatingsByStoreId(int storeId);
 }
 
 class BookingRatingServiceProvider implements BookingRatingProvider {
@@ -19,9 +21,9 @@ class BookingRatingServiceProvider implements BookingRatingProvider {
   BookingRatingServiceProvider(this.ref);
 
   @override
-  Future<Response> createRating(int bookingId, BookingRatingRequest request) async {
+  Future<Response> createRating(
+      int bookingId, BookingRatingRequest request) async {
     try {
-      //final authBox = await Hive.openBox(AppConstants.appSettingsBox);
       final token = await ref.read(hiveStoreService).getAuthToken();
 
       if (token == null) {
@@ -29,8 +31,13 @@ class BookingRatingServiceProvider implements BookingRatingProvider {
       }
 
       FormData formData = FormData.fromMap({
-        'Vote': request.vote,
+        'ServiceVote': request.serviceVote,
+        'StoreVote': request.storeVote,
         'Description': request.description,
+        'Image': request.image != null
+            ? await MultipartFile.fromFile(request.image!.path,
+                filename: request.image!.name)
+            : null,
       });
 
       final response = await ref.read(apiClientProvider).post(
@@ -50,8 +57,47 @@ class BookingRatingServiceProvider implements BookingRatingProvider {
     }
   }
 
+
   @override
-  Future<Response> updateRating(int ratingId, BookingRatingRequest request) async {
+Future<Response> updateRating(int ratingId, Map<String, dynamic> formData) async {
+  try {
+    final token = await ref.read(hiveStoreService).getAuthToken();
+
+    if (token == null) {
+      throw Exception('Authentication token not found');
+    }
+
+    FormData form = FormData.fromMap(formData);
+
+    final headers = {
+      'accept': '*/*',
+      'Content-Type': 'multipart/form-data',
+      'Authorization': 'Bearer $token',
+    };
+
+    final response = await ref.read(apiClientProvider).patch(
+          '${AppConstants.updateRatingForBooking}/$ratingId',
+          data: form,
+          headers: headers,
+        );
+
+    return response;
+  } catch (e) {
+    debugPrint('Error in updateRating: $e');
+    rethrow;
+  }
+}
+
+  @override
+  Future<Response> getRating(int ratingId) async {
+    final response = await ref
+        .read(apiClientProvider)
+        .get('${AppConstants.getRatingByRatingId}/$ratingId');
+    return response;
+  }
+
+  @override
+  Future<Response> getAllRatingsByServiceId(int serviceId) async {
     try {
       final token = await ref.read(hiveStoreService).getAuthToken();
 
@@ -59,34 +105,36 @@ class BookingRatingServiceProvider implements BookingRatingProvider {
         throw Exception('Authentication token not found');
       }
 
-      final Map<String, dynamic> data = {
-        'Vote': request.vote,
-        'Description': request.description,
-      };
-
-      final response = await ref.read(apiClientProvider).put(
-        '${AppConstants.updateRatingForBooking}/$ratingId',
-        data: data,
-        headers: {
-          'accept': '*/*',
-          'Content-Type': 'multipart/form-data',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await ref.read(apiClientProvider).get(
+            '${AppConstants.getAllBookingRatingByServiceId}/$serviceId',
+          );
 
       return response;
     } catch (e) {
-      debugPrint('Error in updateRating: $e');
+      debugPrint('Error in getAllRatingsByServiceId: $e');
       rethrow;
     }
   }
-
   @override
-  Future<Response> getRating(int ratingId) async {
-    final response = await ref.read(apiClientProvider)
-        .get('${AppConstants.getRatingByRatingId}/$ratingId');
-    return response;
+  Future<Response> getAllRatingsByStoreId(int storeId) async {
+    try {
+      final token = await ref.read(hiveStoreService).getAuthToken();
+      
+      if (token == null) {
+        throw Exception('Authentication token not found');
+      }
+      
+      final response = await ref.read(apiClientProvider).get(
+        '${AppConstants.getAllBookingRatingByStoreId}/$storeId',
+      );
+      
+      return response;
+    } catch (e) {
+      debugPrint('Error in getAllRatingsByStoreId: $e');
+      rethrow;
+    }
   }
 }
 
-final bookingRatingServiceProvider = Provider((ref) => BookingRatingServiceProvider(ref));
+final bookingRatingServiceProvider =
+    Provider((ref) => BookingRatingServiceProvider(ref));

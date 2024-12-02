@@ -2,6 +2,7 @@ import 'package:fluffypawuser/controllers/home/home_controller.dart';
 import 'package:fluffypawuser/controllers/notification/notification_controller.dart';
 import 'package:fluffypawuser/models/home/home_data_state.dart';
 import 'package:fluffypawuser/models/notification/notification_model.dart';
+import 'package:fluffypawuser/utils/app_life_cycle_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,6 +69,10 @@ final petTypeProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();
   return controller;
 });
+
+// final appLifecycleProvider = Provider<AppLifecycleNotifier>((ref) {
+//   return AppLifecycleNotifier(ref);
+// });
 
 final weightProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();

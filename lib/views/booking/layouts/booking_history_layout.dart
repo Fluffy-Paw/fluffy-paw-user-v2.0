@@ -3,9 +3,12 @@ import 'dart:math';
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
+import 'package:fluffypawuser/controllers/rating/rating_controller.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/booking/booking_model.dart';
 import 'package:fluffypawuser/views/booking/layouts/booking_detail_layout.dart';
+import 'package:fluffypawuser/views/booking/layouts/booking_rating_detail_layout.dart';
+import 'package:fluffypawuser/views/booking/layouts/create_rating_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +35,8 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
     with SingleTickerProviderStateMixin {
   bool _isLoading = false;
   bool _isRating = false;
+  bool _showCheckedIn = false;
+  bool _showCheckedOut = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   bool _showNewBookingMessage = false;
@@ -88,10 +93,10 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
               ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, size: 20.sp),
-          onPressed: () => Navigator.pop(context),
-        ),
+        // leading: IconButton(
+        //   icon: Icon(Icons.arrow_back_ios, size: 20.sp),
+        //   onPressed: () => Navigator.pop(context),
+        // ),
       ),
       body: AnimationLimiter(
         child: Stack(
@@ -119,13 +124,15 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
       ),
     );
   }
+
   Future<void> _checkNewBooking() async {
     if (widget.hasNewBooking && mounted) {
       final bookings = ref.read(storeController.notifier).bookings ?? [];
       if (bookings.isNotEmpty) {
         final newestBooking = bookings.first;
-        final hasViewed = await ref.read(hiveStoreService).hasViewedBooking(newestBooking.id);
-        
+        final hasViewed =
+            await ref.read(hiveStoreService).hasViewedBooking(newestBooking.id);
+
         if (!hasViewed) {
           setState(() {
             _showNewBookingMessage = true;
@@ -295,202 +302,227 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
     );
   }
 
-  Widget _buildStatusFilters() {
-    return Container(
-      height: 44.h,
-      margin: EdgeInsets.symmetric(vertical: 8.h),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 20.w),
-        itemCount: _statusFilters.length,
-        itemBuilder: (context, index) {
-          final filter = _statusFilters[index];
-          final isSelected = _selectedStatus == filter['id'];
-          final color = filter['color'] as Color;
+ Widget _buildStatusFilters() {
+ return Column(
+   children: [
+     Container(
+       height: 44.h,
+       margin: EdgeInsets.symmetric(vertical: 8.h),
+       child: ListView.builder(
+         scrollDirection: Axis.horizontal,
+         padding: EdgeInsets.symmetric(horizontal: 20.w),
+         itemCount: _statusFilters.length,
+         itemBuilder: (context, index) {
+           final filter = _statusFilters[index];
+           final isSelected = _selectedStatus == filter['id'];
+           final color = filter['color'] as Color;
 
-          return AnimationConfiguration.staggeredList(
-            position: index,
-            duration: const Duration(milliseconds: 375),
-            child: SlideAnimation(
-              horizontalOffset: 50.0,
-              child: FadeInAnimation(
-                child: Padding(
-                  padding: EdgeInsets.only(right: 12.w),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        setState(() => _selectedStatus = filter['id']);
-                        HapticFeedback.lightImpact();
-                      },
-                      borderRadius: BorderRadius.circular(20.r),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        decoration: BoxDecoration(
-                          color: isSelected ? color : color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(
-                            color: isSelected ? color : color.withOpacity(0.3),
-                            width: 1,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: color.withOpacity(0.2),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  )
-                                ]
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              filter['icon'],
-                              size: 18.sp,
-                              color: isSelected ? Colors.white : color,
-                            ),
-                            Gap(6.w),
-                            Text(
-                              filter['label'],
-                              style: AppTextStyle(context)
-                                  .bodyTextSmall
-                                  .copyWith(
-                                    color: isSelected ? Colors.white : color,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+           return AnimationConfiguration.staggeredList(
+             position: index,
+             duration: const Duration(milliseconds: 375),
+             child: SlideAnimation(
+               horizontalOffset: 50.0,
+               child: FadeInAnimation(
+                 child: Padding(
+                   padding: EdgeInsets.only(right: 12.w),
+                   child: Material(
+                     color: Colors.transparent,
+                     child: InkWell(
+                       onTap: () {
+                         setState(() => _selectedStatus = filter['id']);
+                         HapticFeedback.lightImpact();
+                       },
+                       borderRadius: BorderRadius.circular(20.r),
+                       child: AnimatedContainer(
+                         duration: const Duration(milliseconds: 200),
+                         padding: EdgeInsets.symmetric(horizontal: 16.w),
+                         decoration: BoxDecoration(
+                           color: isSelected ? color : color.withOpacity(0.1),
+                           borderRadius: BorderRadius.circular(20.r),
+                           border: Border.all(
+                             color: isSelected ? color : color.withOpacity(0.3),
+                             width: 1,
+                           ),
+                           boxShadow: isSelected
+                               ? [
+                                   BoxShadow(
+                                     color: color.withOpacity(0.2),
+                                     blurRadius: 8,
+                                     offset: const Offset(0, 2),
+                                   )
+                                 ]
+                               : null,
+                         ),
+                         child: Row(
+                           children: [
+                             Icon(
+                               filter['icon'],
+                               size: 18.sp,
+                               color: isSelected ? Colors.white : color,
+                             ),
+                             Gap(6.w),
+                             Text(
+                               filter['label'],
+                               style: AppTextStyle(context).bodyTextSmall.copyWith(
+                                 color: isSelected ? Colors.white : color,
+                                 fontWeight: FontWeight.w500,
+                               ),
+                             ),
+                           ],
+                         ),
+                       ),
+                     ),
+                   ),
+                 ),
+               ),
+             ),
+           );
+         },
+       ),
+     ),
+     
+     Padding(
+       padding: EdgeInsets.symmetric(horizontal: 20.w),
+       child: Row(
+         children: [
+           FilterChip(
+             selected: _showCheckedIn,
+             label: Text('Đã check-in'),
+             onSelected: (value) {
+               setState(() {
+                 _showCheckedIn = value;
+                 if (value) {
+                   _showCheckedOut = false;
+                   _selectedStatus = 'all';
+                 }
+               });
+             },
+             selectedColor: AppColor.violetColor.withOpacity(0.2),
+             checkmarkColor: AppColor.violetColor,
+             labelStyle: TextStyle(
+               color: _showCheckedIn ? AppColor.violetColor : Colors.grey[700],
+             ),
+           ),
+           SizedBox(width: 8.w),
+           FilterChip(
+             selected: _showCheckedOut,
+             label: Text('Đã check-out'),
+             onSelected: (value) {
+               setState(() {
+                 _showCheckedOut = value;
+                 if (value) {
+                   _showCheckedIn = false; 
+                   _selectedStatus = 'all';
+                 }
+               });
+             },
+             selectedColor: AppColor.violetColor.withOpacity(0.2), 
+             checkmarkColor: AppColor.violetColor,
+             labelStyle: TextStyle(
+               color: _showCheckedOut ? AppColor.violetColor : Colors.grey[700],
+             ),
+           ),
+         ],
+       ),
+     ),
+   ],
+ );
+}
 
-  Widget _buildBookingList(List<BookingModel> bookings) {
-    if (bookings.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TweenAnimationBuilder<double>(
-              duration: Duration(seconds: 1),
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Transform.scale(
-                  scale: value,
-                  child: Icon(
-                    Icons.history,
-                    size: 64.sp,
-                    color: Colors.grey[400],
-                  ),
-                );
-              },
-            ),
-            Gap(16.h),
-            SlideTransition(
-              position: Tween<Offset>(
-                begin: Offset(0, 0.5),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: ModalRoute.of(context)!.animation!,
-                curve: Curves.easeOut,
-              )),
-              child: Text(
-                'Chưa có lịch đặt nào',
-                style: AppTextStyle(context).bodyTextSmall.copyWith(
-                      color: Colors.grey[600],
-                    ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+Widget _buildBookingList(List<BookingModel> bookings) {
+ if (bookings.isEmpty) {
+   return Center(child: Text('Chưa có lịch đặt nào'));
+ }
 
-    final Map<String, List<BookingModel>> groupedBookings = {};
-    final now = DateTime.now();
-    List<BookingModel> sortedBookings = List.from(bookings)
-      ..sort((a, b) => b.createDate.compareTo(a.createDate));
-    final newestBookingId = sortedBookings.first.id;
+ final Map<String, List<BookingModel>> groupedBookings = {};
+ final now = DateTime.now();
+ 
+ // Apply filters
+ List<BookingModel> filteredBookings = List.from(bookings);
 
-    for (var booking in sortedBookings) {
-      final bookingDate = booking.createDate;
-      final difference = now.difference(bookingDate).inDays;
+ if (_showCheckedIn) {
+   filteredBookings = filteredBookings.where((b) => b.checkin && !b.checkout).toList();
+ } else if (_showCheckedOut) {
+   filteredBookings = filteredBookings.where((b) => b.checkout).toList();
+ } else if (_selectedStatus != 'all') {
+   filteredBookings = filteredBookings.where((b) => b.status.toLowerCase() == _selectedStatus).toList();
+ }
 
-      String groupKey;
-      if (difference == 0) {
-        groupKey = 'Hôm nay';
-      } else if (difference == 1) {
-        groupKey = 'Hôm qua';
-      } else if (difference < 7) {
-        groupKey = DateFormat('EEEE', 'vi_VN').format(bookingDate);
-      } else {
-        groupKey = 'Cũ hơn';
-      }
+ // Sort and group
+ filteredBookings.sort((a, b) => b.createDate.compareTo(a.createDate));
+ 
+ for (var booking in filteredBookings) {
+   final bookingDate = booking.createDate;
+   final difference = now.difference(bookingDate).inDays;
 
-      groupedBookings.putIfAbsent(groupKey, () => []);
-      groupedBookings[groupKey]!.add(booking);
-    }
+   String groupKey;
+   if (difference == 0) {
+     groupKey = 'Hôm nay';
+   } else if (difference == 1) {
+     groupKey = 'Hôm qua';  
+   } else if (difference < 7) {
+     groupKey = DateFormat('EEEE', 'vi_VN').format(bookingDate);
+   } else {
+     groupKey = 'Cũ hơn';
+   }
 
-    final sortedGroupKeys = groupedBookings.keys.toList()
-      ..sort((a, b) {
-        final order = {
-          'Hôm nay': 0,
-          'Hôm qua': 1,
-          'Cũ hơn': 999,
-        };
-        return (order[a] ?? 2).compareTo(order[b] ?? 2);
-      });
+   groupedBookings.putIfAbsent(groupKey, () => []);
+   groupedBookings[groupKey]!.add(booking);
+ }
 
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      itemCount: sortedGroupKeys.length,
-      itemBuilder: (context, index) {
-        final groupKey = sortedGroupKeys[index];
-        final groupBookings = groupedBookings[groupKey]!
-          ..sort((a, b) => b.createDate.compareTo(a.createDate));
+ final sortedGroupKeys = groupedBookings.keys.toList()
+   ..sort((a, b) {
+     final order = {
+       'Hôm nay': 0,
+       'Hôm qua': 1,
+       'Cũ hơn': 999,
+     };
+     return (order[a] ?? 2).compareTo(order[b] ?? 2);
+   });
 
-        return AnimationConfiguration.staggeredList(
-          position: index,
-          duration: const Duration(milliseconds: 375),
-          child: SlideAnimation(
-            verticalOffset: 50.0,
-            child: FadeInAnimation(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                        bottom: 8.h, top: index == 0 ? 0 : 16.h),
-                    child: Text(
-                      groupKey,
-                      style: AppTextStyle(context).title.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ),
-                  ...groupBookings.map((booking) => _buildBookingCard(
-                        booking,
-                        isNew: booking.id == newestBookingId &&
-                            widget.hasNewBooking,
-                      )),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+ if (filteredBookings.isEmpty) {
+   return Center(
+     child: Column(
+       mainAxisAlignment: MainAxisAlignment.center,
+       children: [
+         Icon(Icons.search_off, size: 64.sp, color: Colors.grey[400]),
+         Gap(16.h),
+         Text(
+           'Không tìm thấy lịch đặt nào',
+           style: AppTextStyle(context).bodyText.copyWith(
+             color: Colors.grey[600],
+           ),
+         ),
+       ],
+     ),
+   );
+ }
+
+ return ListView.builder(
+   padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+   itemCount: sortedGroupKeys.length,
+   itemBuilder: (context, index) {
+     final groupKey = sortedGroupKeys[index];
+     final groupBookings = groupedBookings[groupKey]!;
+
+     return Column(
+       crossAxisAlignment: CrossAxisAlignment.start,
+       children: [
+         Padding(
+           padding: EdgeInsets.only(bottom: 8.h, top: index == 0 ? 0 : 16.h),
+           child: Text(
+             groupKey,
+             style: AppTextStyle(context).title.copyWith(
+               fontWeight: FontWeight.bold,
+             ),
+           ),
+         ),
+         ...groupBookings.map((booking) => _buildBookingCard(booking)),
+       ],
+     );
+   },
+ );
+}
 
   Widget _buildBookingCard(BookingModel booking, {bool isNew = false}) {
     final statusColor = _getStatusColor(booking.status);
@@ -509,11 +541,11 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
           if (isNew) {
             await ref.read(hiveStoreService).markBookingAsViewed(booking.id);
           }
-          
+
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BookingDetailLayout(booking: booking),
+              builder: (context) => BookingDetailLayout(bookingId: booking.id,),
             ),
           ).then((_) {
             // Khi quay lại, kiểm tra và ẩn thông báo nếu cần
@@ -964,102 +996,59 @@ class _BookingHistoryLayoutState extends ConsumerState<BookingHistoryLayout>
     );
   }
 
-  void _showRatingDialog(BookingModel booking) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
+  Future<void> _showRatingDialog(BookingModel booking) async {
+  try {
+    final ratingController = ref.read(bookingRatingController.notifier);
+    await ratingController.getRating(booking.id);
+    final hasRating = ratingController.bookingRating != null;
+    
+    if (mounted) {
+      if (hasRating) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingRatingDetailsScreen(
+              bookingId: booking.id,
+              storeName: booking.storeName,
+            ),
+          ),
+        );
+      } else {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CreateRatingScreen(
+              bookingId: booking.id,
+              storeName: booking.storeName,
+            ),
+          ),
+        );
+      }
+      // Refresh sau khi quay lại từ màn rating
+      _loadBookings();
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              Gap(8.w),
+              Expanded(child: Text('Có lỗi xảy ra khi tải đánh giá')),
+            ],
+          ),
+          backgroundColor: AppColor.redColor,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(20.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.r),
+          ),
         ),
-        contentPadding: EdgeInsets.all(20.w),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.star_rounded,
-                color: Colors.amber,
-                size: 48.sp,
-              ),
-            ),
-            Gap(16.h),
-            Text(
-              'Đánh giá dịch vụ',
-              style: AppTextStyle(context).title.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            Gap(8.h),
-            Text(
-              'Bạn đánh giá như thế nào về dịch vụ của ${booking.storeName}?',
-              textAlign: TextAlign.center,
-              style: AppTextStyle(context).bodyText.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            Gap(20.h),
-            _isRating
-                ? CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-                    strokeWidth: 3,
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      5,
-                      (index) => TweenAnimationBuilder<double>(
-                        duration: Duration(milliseconds: 200 + (index * 100)),
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: Container(
-                                margin: EdgeInsets.symmetric(horizontal: 4.w),
-                                child: IconButton(
-                                  onPressed: () => _handleRating(index + 1),
-                                  icon: Icon(
-                                    Icons.star_rounded,
-                                    color: Colors.amber,
-                                    size: 36.sp,
-                                  ),
-                                  hoverColor: Colors.amber.withOpacity(0.1),
-                                  splashColor: Colors.amber.withOpacity(0.2),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-            Gap(16.h),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-              ),
-              child: Text(
-                'Để sau',
-                style: AppTextStyle(context).bodyText.copyWith(
-                      color: Colors.grey[600],
-                    ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      );
+    }
   }
+}
 
   Future<void> _handleRating(int rating) async {
     setState(() => _isRating = true);

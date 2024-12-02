@@ -2,6 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:fluffypawuser/config/app_constants.dart';
 import 'package:fluffypawuser/config/env_config.dart';
 import 'package:fluffypawuser/config/theme.dart';
+import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
+import 'package:fluffypawuser/controllers/misc/misc_provider.dart';
+import 'package:fluffypawuser/controllers/notification/notification_controller.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
 import 'package:fluffypawuser/routes.dart';
 import 'package:fluffypawuser/utils/global_function.dart';
@@ -14,7 +17,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:form_builder_validators/localization/l10n.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-void main() async{
+void main() async {
   await Hive.initFlutter();
   if (!Hive.isBoxOpen(AppConstants.appSettingsBox)) {
     await Hive.openBox(AppConstants.appSettingsBox);
@@ -33,25 +36,26 @@ void main() async{
   await Firebase.initializeApp();
   await EnvConfig.init();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  
 
   runApp(const ProviderScope(child: MyApp())
-    // DevicePreview(
-    //   enabled: !kReleaseMode,
-    //   builder: (context) => const ProviderScope(
-    //     child: MyApp(),
-    //   ),
-    // ),
-  );
+      // DevicePreview(
+      //   enabled: !kReleaseMode,
+      //   builder: (context) => const ProviderScope(
+      //     child: MyApp(),
+      //   ),
+      // ),
+      );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
-  Locale resolveLocal({required String langCode}){
+  Locale resolveLocal({required String langCode}) {
     return Locale(langCode);
   }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appLifecycleProvider);
     return ScreenUtilInit(
       designSize: const Size(390, 844), // XD Design Sizes
       minTextAdapt: true,
@@ -88,8 +92,9 @@ class MyApp extends StatelessWidget {
                     FormBuilderLocalizations.delegate,
                   ],
                   locale: resolveLocal(
-                      langCode:
-                      selectedLocal == null ? 'en' : selectedLocal['value']),
+                      langCode: selectedLocal == null
+                          ? 'en'
+                          : selectedLocal['value']),
                   localeResolutionCallback: (deviceLocal, supportedLocales) {
                     for (final locale in supportedLocales) {
                       if (locale.languageCode == deviceLocal!.languageCode) {
@@ -99,15 +104,67 @@ class MyApp extends StatelessWidget {
                     return supportedLocales.first;
                   },
                   supportedLocales: S.delegate.supportedLocales,
-                  theme:
-                  getAppTheme(context: context, isDarkTheme: isDark ?? false),
+                  theme: getAppTheme(
+                      context: context, isDarkTheme: isDark ?? false),
                   onGenerateRoute: generatedRoutes,
-                  initialRoute: Routes.splash
-              );
+                  initialRoute: Routes.splash);
             });
       },
     );
   }
+}
 
+final appLifecycleProvider = Provider<AppLifecycleNotifier>((ref) {
+  return AppLifecycleNotifier(ref);
+});
 
+class AppLifecycleNotifier extends WidgetsBindingObserver {
+  final Ref ref;
+  bool _initialized = false;
+
+  AppLifecycleNotifier(this.ref) {
+    print('AppLifecycleNotifier: Initializing...'); // Debug log
+    WidgetsBinding.instance.addObserver(this);
+    // Khởi tạo SignalR ngay khi tạo AppLifecycleNotifier
+    _initSignalR(); 
+  }
+
+  Future<void> _initSignalR() async {
+    if (_initialized) {
+      print('AppLifecycleNotifier: Already initialized'); // Debug log
+      return;
+    }
+
+    print('AppLifecycleNotifier: Getting token...'); // Debug log
+    final token = await ref.read(hiveStoreService).getAuthToken();
+    if (token != null) {
+      print('AppLifecycleNotifier: Token found, initializing SignalR...'); // Debug log
+      await ref.read(notificationControllerProvider.notifier).initializeSignalR();
+      _initialized = true;
+    } else {
+      print('AppLifecycleNotifier: No token found'); // Debug log
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print('AppLifecycleNotifier: State changed to $state'); // Debug log
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _initSignalR();
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _initialized = false;
+        ref.read(notificationControllerProvider.notifier).dispose();
+        break;
+      default:
+        break;
+    }
+  }
+
+  void dispose() {
+    print('AppLifecycleNotifier: Disposing...'); // Debug log
+    WidgetsBinding.instance.removeObserver(this);
+  }
 }

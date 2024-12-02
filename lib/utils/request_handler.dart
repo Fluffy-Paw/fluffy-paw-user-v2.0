@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fluffypawuser/config/app_constants.dart';
+import 'package:fluffypawuser/routes.dart';
 import 'package:fluffypawuser/utils/global_function.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -31,8 +32,8 @@ void addApiInterceptors(Dio dio) {
           case 401:
             Box authBox = Hive.box(AppConstants.authBox);
             authBox.delete(AppConstants.authToken);
-            // GlobalFunction.navigatorKey.currentState
-            //     ?.pushNamedAndRemoveUntil(Routes.login, (route) => false);
+            GlobalFunction.navigatorKey.currentState
+                ?.pushNamedAndRemoveUntil(Routes.login, (route) => false);
             GlobalFunction.showCustomSnackbar(
               message: message,
               isSuccess: false,
@@ -56,30 +57,34 @@ void addApiInterceptors(Dio dio) {
         handler.next(response);
       },
       onError: (error, handler) {
-        switch (error.type) {
-          case DioExceptionType.connectionError:
-          case DioExceptionType.connectionTimeout:
-          case DioExceptionType.badResponse:
-          case DioExceptionType.sendTimeout:
-          case DioExceptionType.receiveTimeout:
-          case DioExceptionType.unknown:
-            GlobalFunction.showCustomSnackbar(
-              message: 'An unknown error occurred',
-              isSuccess: false,
-            );
-            break;
-          default:
-            break;
-        }
+        // switch (error.type) {
+        //   case DioExceptionType.connectionError:
+        //   case DioExceptionType.connectionTimeout:
+        //   case DioExceptionType.badResponse:
+        //   case DioExceptionType.sendTimeout:
+        //   case DioExceptionType.receiveTimeout:
+        //   case DioExceptionType.unknown:
+        //     GlobalFunction.showCustomSnackbar(
+        //       message: 'An unknown error occurred',
+        //       isSuccess: false,
+        //     );
+        //     break;
+        //   default:
+        //     break;
+        // }
         if (error.response != null) {
           final message = error.response!.data['message'];
           final statusCode = error.response!.statusCode;
           switch (statusCode) {
+            case 404:
+              handler.reject(error);
+              return;
+
             case 401:
               Box authBox = Hive.box(AppConstants.authBox);
               authBox.delete(AppConstants.authToken);
-              // GlobalFunction.navigatorKey.currentState
-              //     ?.pushNamedAndRemoveUntil(Routes.login, (route) => false);
+              GlobalFunction.navigatorKey.currentState
+                  ?.pushNamedAndRemoveUntil(Routes.login, (route) => false);
               break;
             case 403:
               GlobalFunction.showCustomSnackbar(
@@ -94,6 +99,22 @@ void addApiInterceptors(Dio dio) {
               );
               break;
           }
+        } else {
+          switch (error.type) {
+          case DioExceptionType.connectionError:
+          case DioExceptionType.connectionTimeout:
+          case DioExceptionType.badResponse:
+          case DioExceptionType.sendTimeout:
+          case DioExceptionType.receiveTimeout:
+          case DioExceptionType.unknown:
+            GlobalFunction.showCustomSnackbar(
+              message: 'An unknown error occurred',
+              isSuccess: false,
+            );
+            break;
+          default:
+            break;
+        }
         }
         handler.reject(error);
       },

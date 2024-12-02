@@ -6,6 +6,8 @@ class AppConstants {
   static const String registerPO = '$baseUrl/api/Authentication/RegisterPO';
   static const String getAccountDetails = '$baseUrl/api/PetOwner/GetPetOwnerDetail';
   static const String updateProfile = '$baseUrl/api/PetOwner/UpdatePetOwnerAccount';
+  //Brand
+  static const String brandById = '$baseUrl/api/PetOwner/GetBrandById';
   //Pet
   static const String getPetListUrl = '$baseUrl/api/Pet/GetAllPets';
   static const String getPetDetailUrl = '$baseUrl/api/Pet/GetPet';
@@ -21,6 +23,9 @@ class AppConstants {
   static const String getStoreServiceByStoreId= '$baseUrl/api/Service/GetAllServiceByStoreId';
   static const String getStoreById= '$baseUrl/api/PetOwner/GetStoreById';
   static const String getAllStoreServiceByServiceId= '$baseUrl/api/PetOwner/GetAllStoreServiceByServiceId';
+  static const String getAllStoreServiceByServiceIdStoreId= '$baseUrl/api/PetOwner/GetAllStoreServiceByServiceIdStoreId';
+  static const String getAllServiceByServiceTypeIdDateTime='$baseUrl/api/PetOwner/GetAllServiceByServiceTypeIdDateTime';
+  static const String getAllStoreByServiceIdDateTime='$baseUrl/api/PetOwner/GetAllStoreByServiceIdDateTime';
   //Vaccine
   static const String getVaccingByPetId= '$baseUrl/api/Vaccine/GetAllVaccineHistories';
   static const String getVaccineDetail= '$baseUrl/api/Vaccine/GetVaccineDetail';
@@ -39,14 +44,24 @@ class AppConstants {
   static const String createBooking= '$baseUrl/api/PetOwner/CreateBooking';
   static const String createBookingTimeSelection='$baseUrl/api/PetOwner/CreateBookingTimeSelection';
   static const String cancelBooking ='$baseUrl/api/PetOwner/CancelBooking';
+  static const String getBookingById ='$baseUrl/api/Booking/GetBookingById';
   //Tracking
-  static const String getAllTrackingByBookingId='$baseUrl//api/PetOwner/GetAllTrackingByBookingId';
+  static const String getAllTrackingByBookingId='$baseUrl/api/PetOwner/GetAllTrackingByBookingId';
   //Notification
   static const String notificationHub='$baseUrl/NotificationHub';
   //Rating
   static const String createRatingForBooking='$baseUrl/api/Booking/CreateBookingRatingByBookingId';
   static const String updateRatingForBooking='$baseUrl/api/Booking/UpdateBookingRatingById';
-  static const String getRatingByRatingId='$baseUrl/api/Booking/GetBookingRatingById';
+  static const String getRatingByRatingId='$baseUrl/api/Booking/GetBookingRatingByBookingId';
+  static const String getAllBookingRatingByServiceId='$baseUrl/api/Booking/GetAllBookingRatingByServiceId';
+  static const String getAllBookingRatingByStoreId='$baseUrl/api/Booking/GetAllBookingRatingByStoreId';
+  //Chat
+  static const String getAllConversation='$baseUrl/api/Conversation/GetAllConversation';
+  static const String createConversation='$baseUrl/api/Conversation/CreateConversation';
+  static const String sendMessage='$baseUrl/api/Conversation/SendMessage';
+  static const String getAllConversationMessageByConversationId='$baseUrl/api/Conversation/GetAllConversationMessageByConversationId';
+  
+
 
 
   

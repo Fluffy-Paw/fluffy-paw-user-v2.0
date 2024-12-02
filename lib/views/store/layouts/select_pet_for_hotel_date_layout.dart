@@ -3,33 +3,21 @@ import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
-import 'package:fluffypawuser/views/store/layouts/booking_confirmation_layout.dart';
-import 'package:fluffypawuser/views/store/layouts/service_time_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluffypawuser/models/pet/pet_model.dart';
 import 'package:gap/gap.dart';
 
-class ChoosePetForBookingLayout extends ConsumerStatefulWidget {
-  final int serviceTypeId;
-  final int timeSlotId;
-  final int storeId;
-  
-
-  const ChoosePetForBookingLayout({
-    super.key,
-    required this.serviceTypeId,
-    required this.timeSlotId,
-    required this.storeId
-  });
+class SelectPetForHotelDateLayout extends ConsumerStatefulWidget {
+  const SelectPetForHotelDateLayout({super.key});
 
   @override
-  ConsumerState<ChoosePetForBookingLayout> createState() => _ChoosePetForBookingLayoutState();
+  ConsumerState<SelectPetForHotelDateLayout> createState() => _SelectPetForHotelDateLayoutState();
 }
 
-class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingLayout> {
-  Set<int> selectedPetIds = {}; // Thay đổi từ single selection sang multiple selection
+class _SelectPetForHotelDateLayoutState extends ConsumerState<SelectPetForHotelDateLayout> {
+  int? selectedPetId; // Chỉ cho phép chọn một thú cưng
   List<PetModel> pets = [];
 
   @override
@@ -49,35 +37,13 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
     }
   }
 
-  void togglePetSelection(int petId) {
+  void selectPet(int petId) {
     setState(() {
-      if (selectedPetIds.contains(petId)) {
-        selectedPetIds.remove(petId);
-      } else {
-        selectedPetIds.add(petId);
-      }
+      // Nếu đang chọn rồi thì bỏ chọn, nếu chưa thì chọn mới
+      selectedPetId = selectedPetId == petId ? null : petId;
     });
   }
 
-  void _confirmSelection() {
-  if (selectedPetIds.isNotEmpty) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingConfirmationLayout(
-          selectedPetIds: selectedPetIds.toList(),
-          timeSlotId: widget.timeSlotId,
-          storeServiceId: widget.serviceTypeId,
-          storeId: widget.storeId,
-        ),
-      ),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Vui lòng chọn ít nhất một thú cưng')),
-    );
-  }
-}
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(petController);
@@ -112,29 +78,10 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Row(
-                          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          //   children: [
-                          //     Text(
-                          //       'Chọn thú cưng của bạn',
-                          //       style: AppTextStyle(context).title.copyWith(
-                          //         fontSize: 24.sp,
-                          //         fontWeight: FontWeight.bold,
-                          //       ),
-                          //     ),
-                          //     Text(
-                          //       '${selectedPetIds.length} đã chọn',
-                          //       style: AppTextStyle(context).bodyText.copyWith(
-                          //         color: AppColor.violetColor,
-                          //         fontWeight: FontWeight.w600,
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
                           Gap(20.h),
                           GridView.builder(
                             shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
+                            physics: const NeverScrollableScrollPhysics(),
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 16.w,
@@ -146,8 +93,8 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
                               final pet = pets[index];
                               return _buildPetCard(
                                 pet: pet,
-                                isSelected: selectedPetIds.contains(pet.id),
-                                onTap: () => togglePetSelection(pet.id),
+                                isSelected: selectedPetId == pet.id,
+                                onTap: () => selectPet(pet.id),
                               );
                             },
                           ),
@@ -257,7 +204,7 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
                 right: 8.w,
                 child: Container(
                   padding: EdgeInsets.all(4.w),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColor.violetColor,
                     shape: BoxShape.circle,
                   ),
@@ -291,7 +238,9 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: selectedPetIds.isNotEmpty ? _confirmSelection : null,
+              onPressed: selectedPetId != null 
+                ? () => Navigator.pop(context, selectedPetId)
+                : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.violetColor,
                 disabledBackgroundColor: AppColor.violetColor.withOpacity(0.5),
@@ -301,7 +250,7 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
                 ),
               ),
               child: Text(
-                'Xác nhận (${selectedPetIds.length})',
+                'Xác nhận',
                 style: AppTextStyle(context).buttonText,
               ),
             ),
@@ -310,5 +259,4 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
       ),
     );
   }
-  
 }

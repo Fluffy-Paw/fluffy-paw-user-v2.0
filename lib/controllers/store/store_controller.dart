@@ -1,7 +1,9 @@
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
 import 'package:fluffypawuser/models/booking/booking_model.dart';
+import 'package:fluffypawuser/models/brand/brand_model.dart';
 import 'package:fluffypawuser/models/pet/service_type_model.dart';
 import 'package:fluffypawuser/models/store/service_time_model.dart';
+import 'package:fluffypawuser/models/store/store_datetime_model.dart';
 import 'package:fluffypawuser/models/store/store_model.dart';
 import 'package:fluffypawuser/models/store/store_service_model.dart';
 import 'package:fluffypawuser/services/store_service_provider.dart';
@@ -23,6 +25,13 @@ class StoreController extends StateNotifier<bool> {
   List<ServiceTimeModel>? get serviceTime => _serviceTime;
   List<BookingModel>? _bookings;
   List<BookingModel>? get bookings => _bookings;
+  List<StoreDateTimeModel>? _stores;
+  List<StoreDateTimeModel>? get stores => _stores;
+  BrandModel? _brand;
+  BrandModel? get brand => _brand;
+  List<StoreServiceModel>? _serviceTypeServices;
+  List<StoreServiceModel>? get serviceTypeServices => _serviceTypeServices;
+  BookingModel? _currentBooking;
 
   final Ref ref;
   StoreController(this.ref) : super(false);
@@ -107,45 +116,50 @@ class StoreController extends StateNotifier<bool> {
 
   Future<void> getAllBookings() async {
     if (!mounted) return;
-
+    
     try {
       state = true;
       final response = await ref.read(storeServiceProvider).getAllBooking();
-
-      if (!mounted) return;
-
+      
       if (response.data['data'] != null) {
         final List<dynamic> bookingList = response.data['data'];
         _bookings = bookingList
-            .map((booking) =>
-                BookingModel.fromMap(Map<String, dynamic>.from(booking)))
-            .toList();
-
-        // Sort bookings by create date (newest first)
-        _bookings?.sort((a, b) => b.createDate.compareTo(a.createDate));
-
-        // Debug log
-        debugPrint('Loaded ${_bookings?.length} bookings');
-        _bookings?.forEach((booking) {
-          debugPrint('Booking ID: ${booking.id}, '
-              'Service: ${booking.serviceName}, '
-              'Store: ${booking.storeName}, '
-              'Status: ${booking.status}, '
-              'Date: ${booking.createDate}');
-        });
-      } else {
-        _bookings = [];
-        debugPrint('No bookings found');
+          .map((booking) => BookingModel.fromMap(Map<String, dynamic>.from(booking)))
+          .toList();
+          
+        // Cập nhật currentBooking nếu có
+        if (_currentBooking != null) {
+          final updated = _bookings?.firstWhere(
+            (b) => b.id == _currentBooking?.id,
+            orElse: () => _currentBooking!
+          );
+          _currentBooking = updated;
+        }
       }
+    } finally {
+      state = false; 
+    }
+  }
+  Future<BookingModel?> getBookingById(int bookingId) async {
+    try {
+      state = true;
+      final response = await ref.read(storeServiceProvider).getBookingById(bookingId);
 
-      if (mounted) state = false;
+      if (response.data['data'] != null) {
+        final bookingData = response.data['data'];
+        _currentBooking = BookingModel.fromMap(Map<String, dynamic>.from(bookingData));
+        return _currentBooking;
+      }
+      return null;
     } catch (e) {
-      debugPrint('Error getting all bookings: $e');
-      if (mounted) state = false;
+      debugPrint('Error getting booking by ID: $e');
       rethrow;
+    } finally {
+      state = false;
     }
   }
 
+  // In StoreController
   Future<void> getStoreById(int storeId) async {
     if (!mounted) return;
 
@@ -156,15 +170,12 @@ class StoreController extends StateNotifier<bool> {
       if (!mounted) return;
 
       if (response.data['data'] != null) {
-        // Handle the case where data is an array
-        final List<dynamic> storeList = response.data['data'];
-        if (storeList.isNotEmpty) {
-          // Take the first store from the array
-          _selectedStore =
-              StoreModel.fromMap(Map<String, dynamic>.from(storeList.first));
-          debugPrint(
-              'Loaded store: ${_selectedStore?.name} (ID: ${_selectedStore?.id})');
-        }
+        // Handle single store object instead of array
+        final storeData = response.data['data'];
+        _selectedStore =
+            StoreModel.fromMap(Map<String, dynamic>.from(storeData));
+        debugPrint(
+            'Loaded store: ${_selectedStore?.name} (ID: ${_selectedStore?.id})');
       }
       if (mounted) state = false;
     } catch (e) {
@@ -201,11 +212,69 @@ class StoreController extends StateNotifier<bool> {
     }
   }
 
-  Future<void> getServiceTime(int storeServiceId) async {
+  Future<void> getStoreServiceWithServiceTypeStoreId(int serviceTypeId) async {
+    try {
+      state = true;
+      final response = await ref
+          .read(storeServiceProvider)
+          .getStoreServiceWithServiceType(serviceTypeId);
+      if (response.data['data'] != null) {
+        final List<dynamic> serviceList = response.data['data'];
+        // Cập nhật vào biến state mới
+        _serviceTypeServices = serviceList
+            .map((service) =>
+                StoreServiceModel.fromMap(Map<String, dynamic>.from(service)))
+            .toList();
+        debugPrint(
+            'Loaded ${_serviceTypeServices?.length} services for service type ID $serviceTypeId');
+        _serviceTypeServices?.forEach((service) {
+          debugPrint(
+              'Service: ${service.name} (ID: ${service.id}) - Type: ${service.serviceTypeName}');
+        });
+      }
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error getting services by service type: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  Future<void> getServiceTime(
+    int storeServiceId,
+  ) async {
     try {
       state = true;
       final response =
           await ref.read(storeServiceProvider).getServiceTime(storeServiceId);
+      if (response.data['data'] != null) {
+        final List<dynamic> serviceList = response.data['data'];
+        _serviceTime = serviceList
+            .map((service) =>
+                ServiceTimeModel.fromMap(Map<String, dynamic>.from(service)))
+            .toList();
+        debugPrint(
+            'Loaded ${_storeServices?.length} time services for store ID $storeServiceId');
+        _storeServices?.forEach((service) {
+          debugPrint(
+              'Service Time: ${service.name} (ID: ${service.id}) - Type: ${service.serviceTypeName}');
+        });
+      }
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error getting store services by store ID: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  Future<void> getServiceTimeWithStoreId(
+      int storeServiceId, int storeId) async {
+    try {
+      state = true;
+      final response = await ref
+          .read(storeServiceProvider)
+          .getServiceTimeWithStoreId(storeServiceId, storeId);
       if (response.data['data'] != null) {
         final List<dynamic> serviceList = response.data['data'];
         _serviceTime = serviceList
@@ -335,6 +404,50 @@ class StoreController extends StateNotifier<bool> {
       state = false;
     }
   }
+
+  Future<void> getStoresByServiceId(int serviceId) async {
+    try {
+      state = true;
+      final response =
+          await ref.read(storeServiceProvider).getStoresByServiceId(serviceId);
+
+      if (response.data['data'] != null) {
+        final List<dynamic> storeList = response.data['data'];
+        _stores = storeList
+            .map((store) =>
+                StoreDateTimeModel.fromMap(Map<String, dynamic>.from(store)))
+            .toList();
+
+        debugPrint(
+            'Loaded ${_stores?.length} stores for service ID $serviceId');
+      }
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error getting stores by service ID: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  Future<void> getBrandById(int brandId) async {
+    try {
+      state = true;
+      final response =
+          await ref.read(storeServiceProvider).getBrandById(brandId);
+
+      if (response.data['data'] != null) {
+        _brand = BrandModel.fromMap(
+            Map<String, dynamic>.from(response.data['data']));
+        debugPrint('Loaded brand: ${_brand?.name}');
+      }
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error getting brand: ${e.toString()}');
+      rethrow;
+    }
+  }
+  
 }
 
 final storeController =

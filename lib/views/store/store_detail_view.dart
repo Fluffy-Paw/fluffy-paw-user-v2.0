@@ -3,13 +3,19 @@ import 'package:flutter/material.dart';
 
 class StoreDetailView extends StatelessWidget {
   final int serviceTypeId;
+  final int? isFromBookingScreen;
   
-  const StoreDetailView({super.key, required this.serviceTypeId});
+  const StoreDetailView({
+    super.key, 
+    required this.serviceTypeId, 
+    this.isFromBookingScreen,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: StoreDetailLayout(storeId: serviceTypeId),
+    return StoreDetailLayout(
+      storeId: serviceTypeId,  // Using serviceTypeId as storeId
+      isFromBookingScreen: isFromBookingScreen,
     );
   }
 }

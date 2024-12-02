@@ -20,12 +20,14 @@ class BookingConfirmationLayout extends ConsumerStatefulWidget {
   final List<int> selectedPetIds;
   final int timeSlotId;
   final int storeServiceId;
+  final int storeId;
 
   const BookingConfirmationLayout({
     super.key,
     required this.selectedPetIds,
     required this.timeSlotId,
     required this.storeServiceId,
+    required this.storeId
   });
 
   @override
@@ -66,7 +68,7 @@ class _BookingConfirmationLayoutState
     // Load time slot details
     await ref
         .read(storeController.notifier)
-        .getServiceTime(widget.storeServiceId);
+        .getServiceTimeWithStoreId(widget.storeServiceId, widget.storeId);
     if (mounted) {
       final allTimeSlots = ref.read(storeController.notifier).serviceTime ?? [];
       setState(() {

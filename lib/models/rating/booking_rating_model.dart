@@ -1,60 +1,61 @@
+import 'package:image_picker/image_picker.dart';
+
 class BookingRating {
   final int id;
   final int bookingId;
   final int petOwnerId;
-  final int vote;
+  final String? fullName;
+  final String? avatar;
+   int serviceVote;
+   int storeVote;
   final String? description;
+  final String? image;
 
   BookingRating({
     required this.id,
     required this.bookingId,
     required this.petOwnerId,
-    required this.vote,
+    this.fullName,
+    this.avatar,
+    required this.serviceVote,
+    required this.storeVote,
     this.description,
+    this.image,
   });
 
   factory BookingRating.fromMap(Map<String, dynamic> map) {
     return BookingRating(
-      id: map['id'] as int,
-      bookingId: map['bookingId'] as int,
-      petOwnerId: map['petOwnerId'] as int,
-      vote: map['vote'] as int,
-      description: map['description'] as String?,
+      id: map['id'] ?? 0,
+      bookingId: map['bookingId'] ?? 0,
+      petOwnerId: map['petOwnerId'] ?? 0,
+      fullName: map['fullName'],
+      avatar: map['avatar'],
+      serviceVote: map['serviceVote'] ?? 0,
+      storeVote: map['storeVote'] ?? 0,
+      description: map['description'],
+      image: map['image'],
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'bookingId': bookingId,
-      'petOwnerId': petOwnerId,
-      'vote': vote,
-      'description': description,
-    };
   }
 }
 
 class BookingRatingRequest {
-  final int vote;
+  final int serviceVote;
+  final int storeVote;
   final String? description;
+  final XFile? image;
 
   BookingRatingRequest({
-    required this.vote,
+    required this.serviceVote,
+    required this.storeVote,
     this.description,
+    this.image,
   });
 
   Map<String, dynamic> toMap() {
     return {
-      'Vote': vote,
+      'ServiceVote': serviceVote,
+      'StoreVote': storeVote,
       'Description': description,
     };
-  }
-
-  // Factory constructor for testing
-  factory BookingRatingRequest.test() {
-    return BookingRatingRequest(
-      vote: 5,
-      description: 'Test rating',
-    );
   }
 }

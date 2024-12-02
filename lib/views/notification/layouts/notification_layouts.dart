@@ -18,6 +18,14 @@ class NotificationScreen extends ConsumerStatefulWidget {
 
 class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   final ScrollController _scrollController = ScrollController();
+  @override
+  void initState() {
+    super.initState();
+    // Fetch notifications when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(notificationControllerProvider.notifier).fetchNotifications();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +40,22 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
           _buildAppBar(context, controller),
           _buildFilterBar(context),
         ],
-        body: _buildNotificationList(notifications, notificationState),
+        body: RefreshIndicator(
+          onRefresh: () => controller.fetchNotifications(),
+          child: _buildNotificationList(notifications, notificationState),
+        ),
       ),
     );
   }
 
   Widget _buildAppBar(BuildContext context, NotificationController controller) {
     final unreadCount = ref.watch(unreadCountProvider(null));
-    
+
     return SliverAppBar(
-      expandedHeight: 150,
-      floating: false,
+      expandedHeight: 120,
+      floating: true,
       pinned: true,
       elevation: 0,
-      backgroundColor: Colors.transparent,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
@@ -58,14 +68,48 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
               ],
             ),
           ),
-        ),
-        title: Text(
-          'Notifications',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -50,
+                top: -50,
+                child: Icon(
+                  Icons.notifications_outlined,
+                  size: 200,
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+            ],
           ),
+        ),
+        title: Row(
+          children: [
+            Text(
+              'Notifications',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+            if (unreadCount > 0)
+              Container(
+                margin: EdgeInsets.only(left: 8),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$unreadCount',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
         ),
         centerTitle: false,
       ),
@@ -84,7 +128,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
         const SizedBox(width: 8),
       ],
       bottom: PreferredSize(
-        preferredSize: Size.fromHeight(50),
+        preferredSize: Size.fromHeight(40),
         child: _buildConnectionStatus(
           ref.watch(notificationControllerProvider).connectionStatus,
         ),
@@ -124,9 +168,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     }
 
     return GestureDetector(
-      onTap: status != "Connected" 
-        ? () => ref.read(notificationControllerProvider.notifier).initializeSignalR()
-        : null,
+      onTap: status != "Connected"
+          ? () => ref
+              .read(notificationControllerProvider.notifier)
+              .initializeSignalR()
+          : null,
       child: Container(
         height: 40,
         padding: EdgeInsets.symmetric(horizontal: 16),
@@ -153,31 +199,74 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       return _buildLoadingState();
     }
 
+    if (state.error != null) {
+      return _buildErrorState(state.error!);
+    }
+
     if (notifications.isEmpty) {
       return _buildEmptyState(ref.watch(selectedFilterProvider));
     }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(notificationControllerProvider.notifier).initializeSignalR();
-      },
-      child: ListView.builder(
-        controller: _scrollController,
-        padding: EdgeInsets.only(bottom: 100),
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final notification = notifications[index];
-          return NotificationCard(
-            notification: notification,
-            index: index,
-          ).animate()
-            .fadeIn(delay: Duration(milliseconds: 50 * index))
-            .slideX(
+    return ListView.builder(
+      controller: _scrollController,
+      padding: EdgeInsets.only(bottom: 100),
+      itemCount: notifications.length,
+      itemBuilder: (context, index) {
+        final notification = notifications[index];
+        return NotificationCard(
+          key: ValueKey(notification.title),
+          notification: notification,
+          index: index,
+        ).animate().fadeIn(delay: Duration(milliseconds: 50 * index)).slideX(
               begin: 0.2,
               curve: Curves.easeOutQuad,
               delay: Duration(milliseconds: 50 * index),
             );
-        },
+      },
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 60,
+            color: Colors.red.shade400,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Error loading notifications',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 14,
+            ),
+          ),
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              ref
+                  .read(notificationControllerProvider.notifier)
+                  .fetchNotifications();
+            },
+            icon: Icon(Icons.refresh),
+            label: Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.purple.shade800,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -265,6 +354,6 @@ class _NotificationFilterDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => 100;
 
   @override
-  bool shouldRebuild(covariant _NotificationFilterDelegate oldDelegate) => false;
+  bool shouldRebuild(covariant _NotificationFilterDelegate oldDelegate) =>
+      false;
 }
-

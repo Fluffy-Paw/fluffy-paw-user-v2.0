@@ -13,11 +13,13 @@ import 'package:table_calendar/table_calendar.dart';
 class BookingTimeSelectionLayout extends ConsumerStatefulWidget {
   final int storeServiceId;
   final double price;
+  final int storeId;
 
   const BookingTimeSelectionLayout({
     Key? key,
     required this.storeServiceId,
     required this.price,
+    required this.storeId
   }) : super(key: key);
 
   @override
@@ -49,7 +51,7 @@ class _BookingTimeSelectionLayoutState
       setState(() => _isLoading = true);
       await ref
           .read(storeController.notifier)
-          .getServiceTime(widget.storeServiceId);
+          .getServiceTimeWithStoreId(widget.storeServiceId, widget.storeId);
       if (!mounted) return;
       setState(() => _isLoading = false);
 
