@@ -1,10 +1,12 @@
 class ServiceTypeModel {
   final int id;
   final String name;
+  final String image;
 
   ServiceTypeModel({
     required this.id,
     required this.name,
+    required this.image
   });
 
   // Factory constructor to create a ServiceType from a Map
@@ -12,6 +14,7 @@ class ServiceTypeModel {
     return ServiceTypeModel(
       id: map['id'],
       name: map['name'],
+      image: map['image'],
     );
   }
 
@@ -20,6 +23,7 @@ class ServiceTypeModel {
     return {
       'id': id,
       'name': name,
+      'image':image
     };
   }
 

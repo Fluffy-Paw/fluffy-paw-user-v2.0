@@ -1,4 +1,5 @@
 import 'package:fluffypawuser/config/app_constants.dart';
+import 'package:fluffypawuser/models/conversation/conversation_model.dart';
 import 'package:fluffypawuser/models/pet/pet_detail_model.dart';
 import 'package:fluffypawuser/models/pet/pet_model.dart';
 import 'package:fluffypawuser/models/profile/profile_model.dart';
@@ -16,6 +17,32 @@ class HiveController {
   Future saveUserAuthToken({required String authToken}) async {
     final authBox = await Hive.openBox(AppConstants.appSettingsBox);
     await authBox.put(AppConstants.authToken, authToken); // Sửa key thành authToken
+  }
+  Future<void> saveConversations({
+    required List<ConversationModel> conversations,
+  }) async {
+    final conversationBox = await Hive.openBox<dynamic>(AppConstants.conversationBox);
+    
+    // Store only essential metadata
+    final conversationData = conversations.map((conv) => {
+      'id': conv.id,
+      'poAccountId': conv.poAccountId,
+      'lastMessage': conv.lastMessage,
+      'timeSinceLastMessage': conv.timeSinceLastMessage,
+      'poName': conv.poName,
+      'poAvatar': conv.poAvatar,
+    }).toList();
+    
+    await conversationBox.put('conversations', conversationData);
+  }
+
+  Future<List<ConversationModel>?> getConversations() async {
+    final conversationBox = await Hive.openBox<dynamic>(AppConstants.conversationBox);
+    final data = conversationBox.get('conversations') as List?;
+    
+    if (data == null) return null;
+    
+    return data.map((item) => ConversationModel.fromMap(Map<String, dynamic>.from(item))).toList();
   }
 
   Future<bool> removeAllData() async {
@@ -111,6 +138,18 @@ class HiveController {
     final box = await Hive.openBox('appBox');
     List<String> viewedBookings = box.get(viewedBookingsKey, defaultValue: <String>[]).cast<String>();
     return viewedBookings.contains(bookingId.toString());
+  }
+
+  Future<UserModel?> getUserInfo() async {
+    final userBox = await Hive.openBox(AppConstants.userBox);
+    Map<dynamic, dynamic>? userInfo = userBox.get(AppConstants.userData);
+    if (userInfo != null) {
+      Map<String, dynamic> userInfoStringKeys =
+      userInfo.cast<String, dynamic>();
+      UserModel user = UserModel.fromMap(userInfoStringKeys);
+      return user;
+    }
+    return null;
   }
 
 

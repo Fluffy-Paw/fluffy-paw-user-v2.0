@@ -60,7 +60,12 @@ class AppConstants {
   static const String createConversation='$baseUrl/api/Conversation/CreateConversation';
   static const String sendMessage='$baseUrl/api/Conversation/SendMessage';
   static const String getAllConversationMessageByConversationId='$baseUrl/api/Conversation/GetAllConversationMessageByConversationId';
-  
+  //Recommend
+  static const String recommendService="$baseUrl/api/PetOwner/RecommendService";
+  static const String top6Services="$baseUrl/api/PetOwner/Top6Services";
+  //Report
+  static const String getAllReportCategoryName="$baseUrl/api/Report/GetAllReportCategoryName";
+  static const String createReport="$baseUrl/api/Report/CreateReport";
 
 
 
@@ -88,6 +93,7 @@ class AppConstants {
   static const String storeData = 'storeData';
   static const String petData = 'petData';
   static const String petBehaviorData = 'petBehaviorData';
+  static const String conversationBox = 'conversation_box';
 
   // Other constants
   static const String appCurrency = "\$";

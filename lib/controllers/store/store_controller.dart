@@ -32,6 +32,10 @@ class StoreController extends StateNotifier<bool> {
   List<StoreServiceModel>? _serviceTypeServices;
   List<StoreServiceModel>? get serviceTypeServices => _serviceTypeServices;
   BookingModel? _currentBooking;
+  List<StoreServiceModel>? _recommendedServices;
+  List<StoreServiceModel>? get recommendedServices => _recommendedServices;
+  List<StoreServiceModel>? _top6Services;
+  List<StoreServiceModel>? get top6Services => _top6Services;
 
   final Ref ref;
   StoreController(this.ref) : super(false);
@@ -77,6 +81,48 @@ class StoreController extends StateNotifier<bool> {
     } catch (e) {
       state = false;
       debugPrint('Error getting all stores: ${e.toString()}');
+      rethrow;
+    }
+  }
+  Future<void> getRecommendedServices() async {
+    try {
+      state = true;
+      final response = await ref.read(storeServiceProvider).getRecommendService();
+      
+      if (response.statusCode == 200 && response.data['data'] != null) {
+        _recommendedServices = (response.data['data'] as List)
+            .map((item) => StoreServiceModel.fromMap(item))
+            .toList();
+            
+        // Optionally save to local storage if needed
+        // await ref.read(hiveStoreService).saveRecommendedServices(services: _recommendedServices!);
+      }
+
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error getting recommended services: ${e.toString()}');
+      rethrow;
+    }
+  }
+  Future<void> getTop6Services() async {
+    try {
+      state = true;
+      final response = await ref.read(storeServiceProvider).getTop6Services();
+      
+      if (response.statusCode == 200 && response.data['data'] != null) {
+        _top6Services = (response.data['data'] as List)
+            .map((item) => StoreServiceModel.fromMap(item))
+            .toList();
+
+        // Optionally save to local storage if needed
+        // await ref.read(hiveStoreService).saveTop6Services(services: _top6Services!);
+      }
+
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error getting top 6 services: ${e.toString()}');
       rethrow;
     }
   }

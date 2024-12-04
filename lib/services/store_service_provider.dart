@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fluffypawuser/config/app_constants.dart';
 import 'package:fluffypawuser/utils/api_clients.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract class StoreProvider {
@@ -19,6 +20,8 @@ abstract class StoreProvider {
   Future<Response> getBrandById(int brandId);
   Future<Response> getServiceTimeWithStoreId(int serviceStoreId, int storeId);
   Future<Response> getBookingById(int bookingId);
+  Future<Response> getRecommendService();
+  Future<Response> getTop6Services();
 
 
 }
@@ -51,6 +54,21 @@ class StoreServiceProvider implements StoreProvider {
   Future<Response> getStoreById(int storeId) {
     final response = ref.read(apiClientProvider).get('${AppConstants.getStoreById}/$storeId');
     return response;
+  }
+  @override
+  Future<Response> getRecommendService() async {
+    final response = await ref.read(apiClientProvider).get(AppConstants.recommendService);
+    return response;
+  }
+  @override
+  Future<Response> getTop6Services() async {
+    try {
+      final response = await ref.read(apiClientProvider).get(AppConstants.top6Services);
+      return response;
+    } catch (e) {
+      debugPrint('Error getting top 6 services: $e');
+      rethrow;
+    }
   }
   
   @override

@@ -2,6 +2,7 @@ import 'package:fluffypawuser/controllers/home/home_controller.dart';
 import 'package:fluffypawuser/controllers/notification/notification_controller.dart';
 import 'package:fluffypawuser/models/home/home_data_state.dart';
 import 'package:fluffypawuser/models/notification/notification_model.dart';
+import 'package:fluffypawuser/services/auth_token_service.dart';
 import 'package:fluffypawuser/utils/app_life_cycle_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -77,6 +78,9 @@ final petTypeProvider = Provider<TextEditingController>((ref) {
 final weightProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();
   return controller;
+});
+final currentUserIdProvider = FutureProvider<String?>((ref) async {
+  return await ref.read(authTokenServiceProvider).getCurrentUserId();
 });
 
 final microchipNumberProvider = Provider<TextEditingController>((ref) {

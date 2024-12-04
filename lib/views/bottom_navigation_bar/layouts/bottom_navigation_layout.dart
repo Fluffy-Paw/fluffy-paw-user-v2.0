@@ -3,6 +3,7 @@ import 'package:fluffypawuser/gen/assets.gen.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
 import 'package:fluffypawuser/views/booking/booking_history_view.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/components/app_bottom_navbar.dart';
+import 'package:fluffypawuser/views/conversation/layout/conversation_list_layout.dart';
 import 'package:fluffypawuser/views/home_screen/home_view.dart';
 import 'package:fluffypawuser/views/profile/profile_view.dart';
 import 'package:fluffypawuser/views/wallet/wallet_view.dart';
@@ -66,7 +67,7 @@ class _BottomNavigationLayoutState
           HomeView(),
           BookingHistoryView(),
           WalletView(),
-          ProfileView(),
+          ConversationScreen(),
           ProfileView(),
         ],
       ),

@@ -8,6 +8,7 @@ import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/booking/booking_model.dart';
 import 'package:fluffypawuser/models/notification/notification_event.dart';
 import 'package:fluffypawuser/models/notification/notification_model.dart';
+import 'package:fluffypawuser/views/report/report_screen.dart';
 import 'package:fluffypawuser/views/tracking/tracking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -873,20 +874,16 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
   }
 
   Widget _buildBottomActionBar() {
+    if (_booking == null) return const SizedBox.shrink();
     final status = _booking?.status.toLowerCase();
 
-    // Case 1: Pending Order - Show Cancel button
     if (status == 'pending') {
       return _buildCancelButton();
     }
-    if (status == 'overtime') {
-      return Container();
-    }
-    if (status == 'canceled') {
-      return Container();
+    if (status == 'overtime' || status == 'canceled') {
+      return _buildReportButton();
     }
 
-    // Case 2: Accepted Order but not checked in
     if (status == 'accepted' && !_booking!.checkin) {
       return Container(
         color: Colors.white,
@@ -894,34 +891,40 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
           top: false,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: SizedBox(
-              width: double.infinity,
-              height: 44.h,
-              child: ElevatedButton.icon(
-                onPressed: () => _generateQRCode('Checkin', _booking!.id),
-                icon: Icon(Icons.login_rounded, size: 18.sp),
-                label: Text(
-                  'Check-in ngay',
-                  style: AppTextStyle(context).buttonText.copyWith(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44.h,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _generateQRCode('Checkin', _booking!.id),
+                      icon: Icon(Icons.login_rounded, size: 18.sp),
+                      label: Text(
+                        'Check-in ngay',
+                        style: AppTextStyle(context).buttonText.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
                       ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                Gap(12.w),
+                _buildReportButton(isSmall: true),
+              ],
             ),
           ),
         ),
       );
     }
 
-// Case 3: Checked in but not checked out
     return Container(
       color: Colors.white,
       child: SafeArea(
@@ -930,7 +933,8 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           child: Row(
             children: [
-              // Nút Tracking
+              _buildReportButton(isSmall: true),
+              Gap(12.w),
               Expanded(
                 flex: 1,
                 child: ElevatedButton.icon(
@@ -938,8 +942,7 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            TrackingScreen(bookingId: _booking!.id),
+                        builder: (context) => TrackingScreen(bookingId: _booking!.id),
                       ),
                     );
                   },
@@ -970,9 +973,8 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
                   ),
                 ),
               ),
-              Gap(12.w),
-              // Nút Check-out
-              if (!_booking!.checkout)
+              if (!_booking!.checkout) ...[
+                Gap(12.w),
                 Expanded(
                   flex: 1,
                   child: ElevatedButton.icon(
@@ -1000,9 +1002,52 @@ class _BookingDetailLayoutState extends ConsumerState<BookingDetailLayout> {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildReportButton({bool isSmall = false}) {
+    return SizedBox(
+      width: isSmall ? 44.h : double.infinity,
+      height: 44.h,
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReportScreen(targetId: _booking!.id),
+            ),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red[50],
+          elevation: 0,
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+        ),
+        child: isSmall 
+          ? Icon(Icons.report_problem_outlined, size: 18.sp, color: Colors.red[700])
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.report_problem_outlined, size: 18.sp, color: Colors.red[700]),
+                Gap(8.w),
+                Text(
+                  'Báo cáo',
+                  style: AppTextStyle(context).buttonText.copyWith(
+                    color: Colors.red[700],
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
       ),
     );
   }

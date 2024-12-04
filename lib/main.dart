@@ -31,6 +31,7 @@ void main() async {
   if (!Hive.isBoxOpen(AppConstants.petBehaviorBox)) {
     await Hive.openBox(AppConstants.petBehaviorBox);
   }
+  await Hive.openBox(AppConstants.conversationBox);
 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
