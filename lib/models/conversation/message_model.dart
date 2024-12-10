@@ -15,7 +15,8 @@ class MessageFile {
     return MessageFile(
       id: map['id'] ?? 0,
       file: map['file'] ?? '',
-      createDate: DateTime.parse(map['createDate'] ?? DateTime.now().toIso8601String()),
+      createDate:
+          DateTime.parse(map['createDate'] ?? DateTime.now().toIso8601String()),
       status: map['status'] ?? false,
     );
   }
@@ -51,15 +52,42 @@ class Message {
       id: map['id'] ?? 0,
       conversationId: map['conversationId'] ?? 0,
       senderId: map['senderId'] ?? 0,
-      createTime: DateTime.parse(map['createTime'] ?? DateTime.now().toIso8601String()),
+      createTime:
+          DateTime.parse(map['createTime'] ?? DateTime.now().toIso8601String()),
       content: map['content'] ?? '',
       isSeen: map['isSeen'] ?? false,
-      deleteAt: map['deleteAt'] != null ? DateTime.parse(map['deleteAt']) : null,
+      deleteAt:
+          map['deleteAt'] != null ? DateTime.parse(map['deleteAt']) : null,
       isDelete: map['isDelete'] ?? false,
       replyMessageId: map['replyMessageId'] ?? 0,
       files: List<MessageFile>.from(
         (map['files'] ?? []).map((x) => MessageFile.fromMap(x)),
       ),
+    );
+  }
+  Message copyWith({
+    int? id,
+    int? conversationId,
+    int? senderId,
+    String? content,
+    DateTime? createTime,
+    bool? isSeen,
+    bool? isDelete,
+    int? replyMessageId,
+    DateTime? deleteAt,
+    List<MessageFile>? files,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      conversationId: conversationId ?? this.conversationId,
+      senderId: senderId ?? this.senderId,
+      content: content ?? this.content,
+      createTime: createTime ?? this.createTime,
+      isSeen: isSeen ?? this.isSeen,
+      isDelete: isDelete ?? this.isDelete,
+      replyMessageId: replyMessageId ?? this.replyMessageId,
+      deleteAt: deleteAt ?? this.deleteAt,
+      files: files ?? this.files,
     );
   }
 

@@ -22,17 +22,17 @@ class AvailableStoresScreen extends ConsumerStatefulWidget {
   final double price;
   final PetModel? selectedPet;
 
-  const AvailableStoresScreen({
-    Key? key,
-    required this.checkIn,
-    required this.checkOut,
-    required this.rooms,
-    required this.adults,
-    required this.serviceId,
-    required this.serviceName,
-    required this.price,
-    required this.selectedPet
-  }) : super(key: key);
+  const AvailableStoresScreen(
+      {Key? key,
+      required this.checkIn,
+      required this.checkOut,
+      required this.rooms,
+      required this.adults,
+      required this.serviceId,
+      required this.serviceName,
+      required this.price,
+      required this.selectedPet})
+      : super(key: key);
 
   @override
   ConsumerState<AvailableStoresScreen> createState() =>
@@ -296,7 +296,10 @@ class _AvailableStoresScreenState extends ConsumerState<AvailableStoresScreen> {
                                       top: Radius.circular(12.r),
                                     ),
                                     child: CachedNetworkImage(
-                                      imageUrl: store.logo,
+                                      imageUrl: store.files.isNotEmpty
+                                          ? store.files.first.file
+                                          : store
+                                              .logo, // Use first image from files if available, fallback to logo
                                       height: 150.h,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
@@ -417,7 +420,8 @@ class _AvailableStoresScreenState extends ConsumerState<AvailableStoresScreen> {
                                                           selectedStoreTimeSlots, // Truyền list khung giờ đã lọc
                                                       serviceId:
                                                           widget.serviceId,
-                                                      selectedPet: widget.selectedPet,
+                                                      selectedPet:
+                                                          widget.selectedPet,
                                                     ),
                                                   ),
                                                 );

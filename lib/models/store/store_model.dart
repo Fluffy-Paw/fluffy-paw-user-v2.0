@@ -10,6 +10,7 @@ class StoreModel {
   final double totalRating;
   final bool status;
   final List<FileModel> files;
+  double? distance;
 
   StoreModel({
     required this.id,
@@ -23,6 +24,7 @@ class StoreModel {
     required this.totalRating,
     required this.status,
     required this.files,
+    this.distance,
   });
 
   factory StoreModel.fromMap(Map<String, dynamic> map) {
@@ -42,6 +44,7 @@ class StoreModel {
       totalRating: (map['totalRating'] ?? 0).toDouble(),
       status: map['status'] ?? false,
       files: filesList,
+      distance: null,
     );
   }
 

@@ -5,8 +5,10 @@ import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
 import 'package:fluffypawuser/controllers/misc/misc_provider.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
+import 'package:fluffypawuser/models/booking/booking_data_model.dart';
 import 'package:fluffypawuser/models/pet/pet_model.dart';
 import 'package:fluffypawuser/models/store/service_time_model.dart';
+import 'package:fluffypawuser/models/store/store_model.dart';
 import 'package:fluffypawuser/models/store/store_service_model.dart';
 import 'package:fluffypawuser/routes.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/layouts/bottom_navigation_layout.dart';
@@ -17,17 +19,17 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 
 class BookingConfirmationLayout extends ConsumerStatefulWidget {
+  // final List<int> selectedPetIds;
+  // final int timeSlotId;
+  // final int storeServiceId;
+  // final int storeId;
+  final BookingDataModel bookingData;
   final List<int> selectedPetIds;
-  final int timeSlotId;
-  final int storeServiceId;
-  final int storeId;
 
   const BookingConfirmationLayout({
     super.key,
+    required this.bookingData,
     required this.selectedPetIds,
-    required this.timeSlotId,
-    required this.storeServiceId,
-    required this.storeId
   });
 
   @override
@@ -38,52 +40,38 @@ class BookingConfirmationLayout extends ConsumerStatefulWidget {
 class _BookingConfirmationLayoutState
     extends ConsumerState<BookingConfirmationLayout> {
   final TextEditingController descriptionController = TextEditingController();
-  String selectedPaymentMethod = 'COD'; // Default payment method
+  String selectedPaymentMethod = 'COD';
   List<PetModel> selectedPets = [];
   ServiceTimeModel? timeSlot;
   StoreServiceModel? service;
+  StoreModel? store;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    // Khởi tạo dữ liệu từ bookingData
+    setState(() {
+      service = widget.bookingData.service;
+      timeSlot = widget.bookingData.timeSlot;
+      store = widget.bookingData.store;
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
+      _loadPetData();
     });
   }
 
-  Future<void> _loadData() async {
-    // Load pet details
-    await ref
-        .read(petController.notifier)
-        .getPetList(); // Đợi getPetList hoàn thành
-    if (mounted) {
-      final allPets = ref.read(hiveStoreService).getPetInfo() ?? [];
-      setState(() {
-        selectedPets = allPets
-            .where((pet) => widget.selectedPetIds.contains(pet.id))
-            .toList();
-      });
-    }
-
-    // Load time slot details
-    await ref
-        .read(storeController.notifier)
-        .getServiceTimeWithStoreId(widget.storeServiceId, widget.storeId);
-    if (mounted) {
-      final allTimeSlots = ref.read(storeController.notifier).serviceTime ?? [];
-      setState(() {
-        timeSlot =
-            allTimeSlots.firstWhere((slot) => slot.id == widget.timeSlotId);
-      });
-    }
-
-    // Load service details
+  Future<void> _loadPetData() async {
+    await ref.read(petController.notifier).getPetList();
     if (mounted) {
       setState(() {
-        service = ref
-            .read(storeController.notifier)
-            .storeServices
-            ?.firstWhere((service) => service.id == widget.storeServiceId);
+        selectedPets = ref
+                .read(hiveStoreService)
+                .getPetInfo()
+                ?.where((pet) => widget.selectedPetIds.contains(pet.id))
+                .toList() ??
+            [];
       });
     }
   }
@@ -121,6 +109,11 @@ class _BookingConfirmationLayoutState
                     _buildSection(
                       title: 'Thông tin dịch vụ',
                       child: _buildServiceInfo(),
+                    ),
+                    Gap(16.h),
+                    _buildSection(
+                      title: 'Chi nhánh',
+                      child: _buildStoreInfo(),
                     ),
                     Gap(16.h),
                     _buildSection(
@@ -202,11 +195,137 @@ class _BookingConfirmationLayoutState
           ),
           Gap(8.h),
           Text(
-            'Giá: \$${service!.cost}',
-            style: AppTextStyle(context).bodyText.copyWith(
-                  color: AppColor.violetColor,
+            service!.description ?? 'Không có mô tả',
+            style: AppTextStyle(context).bodyTextSmall.copyWith(
+                  color: Colors.grey[600],
+                ),
+          ),
+          Gap(12.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Giá dịch vụ',
+                    style: AppTextStyle(context).bodyTextSmall,
+                  ),
+                  Text(
+                    '${NumberFormat('#,###', 'vi_VN').format(service!.cost)}đ',
+                    style: AppTextStyle(context).bodyText.copyWith(
+                          color: AppColor.violetColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Thời gian dự kiến',
+                    style: AppTextStyle(context).bodyTextSmall,
+                  ),
+                  Text(
+                    '${service!.duration} phút',
+                    style: AppTextStyle(context).bodyText.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStoreInfo() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: AppColor.whiteColor,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Chi nhánh',
+            style: AppTextStyle(context).subTitle.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
+          ),
+          Gap(8.h),
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8.r),
+                child: CachedNetworkImage(
+                  imageUrl: store?.logo ?? '',
+                  width: 60.w,
+                  height: 60.w,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Gap(12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store?.name ?? 'Loading...',
+                      style: AppTextStyle(context).bodyText.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    Gap(4.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 16.sp,
+                          color: AppColor.violetColor,
+                        ),
+                        Gap(4.w),
+                        Expanded(
+                          child: Text(
+                            store?.address ?? 'Loading...',
+                            style: AppTextStyle(context).bodyTextSmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Gap(4.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone,
+                          size: 16.sp,
+                          color: AppColor.violetColor,
+                        ),
+                        Gap(4.w),
+                        Text(
+                          store?.phone ?? 'Loading...',
+                          style: AppTextStyle(context).bodyTextSmall,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -465,7 +584,8 @@ class _BookingConfirmationLayoutState
       ),
     );
   }
-   Future<void> _handleBooking() async {
+
+  Future<void> _handleBooking() async {
     try {
       // Show loading indicator
       showDialog(
@@ -485,11 +605,11 @@ class _BookingConfirmationLayoutState
 
       // Attempt to create booking
       final result = await ref.read(storeController.notifier).createBooking(
-        widget.timeSlotId,
-        widget.selectedPetIds,
-        selectedPaymentMethod,
-        descriptionController.text,
-      );
+            widget.bookingData.timeSlot.id,
+            widget.selectedPetIds,
+            selectedPaymentMethod,
+            descriptionController.text,
+          );
 
       // Hide loading indicator
       if (mounted) {
@@ -509,7 +629,6 @@ class _BookingConfirmationLayoutState
           );
         }
       }
-
     } catch (error) {
       // Hide loading indicator if still showing
       if (mounted) {
@@ -543,7 +662,6 @@ class _BookingConfirmationLayoutState
       }
     }
   }
-
 
   @override
   void dispose() {

@@ -2,8 +2,11 @@ import 'dart:async';
 
 import 'package:fluffypawuser/config/theme.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
+import 'package:fluffypawuser/models/store/store_model.dart';
 import 'package:fluffypawuser/models/store/store_service_model.dart';
+import 'package:fluffypawuser/utils/handle_permission.dart';
 import 'package:fluffypawuser/views/store/layouts/service_detail_layout.dart';
+import 'package:fluffypawuser/views/store/layouts/store_detail_layout.dart';
 import 'package:fluffypawuser/views/store/layouts/store_service_by_type_layoute.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +27,7 @@ class _RecommendedServicesScreenState
   late Timer _bannerTimer;
   int? _selectedServiceTypeId;
   final PageController _bannerController = PageController();
+  bool _showNearbyStores = false;
 
   final List<String> bannerImages = [
     'https://firebasestorage.googleapis.com/v0/b/fluffy-paw-8e7c1.appspot.com/o/images%2Fdd52a47c-03ff-48eb-a5c2-cf608c9f2f86_Screenshot%202024-12-04%20at%2002.11.30.png?alt=media&token=51a74d39-8cba-4fbb-b609-867974947794',
@@ -34,6 +38,7 @@ class _RecommendedServicesScreenState
   @override
   void initState() {
     super.initState();
+    _handleLocationPermission();
     _scrollController.addListener(_onScroll);
     Future.microtask(() => _loadData());
 
@@ -64,10 +69,23 @@ class _RecommendedServicesScreenState
   Future<void> _loadData() async {
     if (!mounted) return;
     try {
-      await ref.read(storeController.notifier).getRecommendedServices();
+      await Future.wait([
+        ref.read(storeController.notifier).getRecommendedServices(),
+        ref.read(storeController.notifier).getAllStoreWithDistance(),
+        ref.read(storeController.notifier).getTop6Services(),
+      ]);
     } catch (e) {
-      debugPrint('Error loading recommended services: $e');
+      debugPrint('Error loading data: $e');
     }
+  }
+
+  Future<void> _handleLocationPermission() async {
+    final hasPermission = await handleLocationPermission(context);
+    if (!hasPermission) {
+      // Xử lý khi không có quyền
+      return;
+    }
+    // Tiếp tục xử lý khi có quyền
   }
 
   @override
@@ -88,53 +106,152 @@ class _RecommendedServicesScreenState
       ),
       body: RefreshIndicator(
         onRefresh: _loadData,
-        child: Consumer(
-          builder: (context, ref, child) {
-            final recommendedServices =
-                ref.watch(storeController.notifier).recommendedServices;
-            final isLoading = ref.watch(storeController);
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            // Banner section
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 16.h),
+                  _buildBanner(),
+                  SizedBox(height: 24.h),
+                ],
+              ),
+            ),
 
-            if (isLoading) {
-              return Center(child: CircularProgressIndicator());
-            }
+            // Service Type Filter section
+            Consumer(
+              builder: (context, ref, child) {
+                final serviceTypes =
+                    ref.watch(storeController.notifier).petTypes;
+                if (serviceTypes != null) {
+                  return SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        _buildServiceTypeFilter(),
+                        SizedBox(height: 24.h),
+                      ],
+                    ),
+                  );
+                }
+                return SliverToBoxAdapter(child: SizedBox.shrink());
+              },
+            ),
 
-            if (recommendedServices == null || recommendedServices.isEmpty) {
-              return Center(
-                child: Text('Không có dịch vụ được đề xuất'),
-              );
-            }
+            // Recommended Services Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Text(
+                  'Các dịch vụ phù hợp với bạn',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+            ),
 
-            return CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 16.h),
-                      _buildBanner(),
-                      SizedBox(height: 24.h),
-                      _buildServiceTypeFilter(),
-                      SizedBox(height: 24.h),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.w),
-                        child: Text(
-                          'Các dịch vụ phù hợp với bạn',
+            SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+
+            // Recommended Services Grid
+            Consumer(
+              builder: (context, ref, child) {
+                final recommendedServices =
+                    ref.watch(storeController.notifier).recommendedServices;
+                final top6Services =
+                    ref.watch(storeController.notifier).top6Services;
+
+                if (recommendedServices?.isNotEmpty == true ||
+                    top6Services?.isNotEmpty == true) {
+                  final services = recommendedServices ?? top6Services;
+                  return _buildServiceGrid(services);
+                }
+                return SliverToBoxAdapter(child: SizedBox.shrink());
+              },
+            ),
+
+            // Nearby Stores Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Cửa hàng gần bạn',
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
                         ),
-                      ),
-                      SizedBox(height: 16.h),
-                    ],
-                  ),
+                        TextButton(
+                          onPressed: () {
+                            // Navigate to full list of nearby stores
+                          },
+                          child: Text(
+                            'Xem tất cả',
+                            style: TextStyle(
+                              color: colors(context).primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                _buildServiceGrid(), // Chỉ cần gọi method này
-                SliverPadding(padding: EdgeInsets.only(bottom: 20.h)),
-              ],
-            );
-          },
+              ),
+            ),
+
+            // Nearby Stores Grid
+            Consumer(
+              builder: (context, ref, child) {
+                final stores = ref.watch(storeController.notifier).sortedStores;
+
+                if (stores?.isEmpty ?? true) {
+                  return SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32.h),
+                        child: Text(
+                          'Không tìm thấy cửa hàng gần bạn',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                // Chỉ hiển thị 4 cửa hàng gần nhất
+                final nearbyStores = stores!.take(4).toList();
+                return SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 16.w,
+                      mainAxisSpacing: 16.w,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildStoreCard(nearbyStores[index]),
+                      childCount: nearbyStores.length,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            SliverPadding(padding: EdgeInsets.only(bottom: 20.h)),
+          ],
         ),
       ),
       floatingActionButton: _showScrollToTop
@@ -257,56 +374,208 @@ class _RecommendedServicesScreenState
     );
   }
 
-  Widget _buildServiceGrid() {
+  Widget _buildNearbyFilter() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Row(
+        children: [
+          Text(
+            'Gần tôi',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Switch(
+            value: _showNearbyStores,
+            onChanged: (value) {
+              setState(() {
+                _showNearbyStores = value;
+              });
+            },
+            activeColor: colors(context).primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridContent() {
     return Consumer(
       builder: (context, ref, child) {
         final recommendedServices =
             ref.watch(storeController.notifier).recommendedServices;
+        final stores = _showNearbyStores
+            ? ref.watch(storeController.notifier).sortedStores
+            : ref.watch(storeController.notifier).storeModel;
 
-        if (recommendedServices == null || recommendedServices.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Center(
-              child: Text('Không có dịch vụ được đề xuất'),
-            ),
-          );
+        // Hiển thị danh sách dịch vụ hoặc cửa hàng tùy theo filter
+        if (_showNearbyStores) {
+          return _buildStoreGrid(stores);
+        } else {
+          return _buildServiceGrid(recommendedServices);
         }
-
-        // Filter services based on selected type
-        final filteredServices = _selectedServiceTypeId != null
-            ? recommendedServices
-                .where((s) => s.serviceTypeId == _selectedServiceTypeId)
-                .toList()
-            : recommendedServices;
-
-        if (filteredServices.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Center(
-              child: Text('Không có dịch vụ nào trong danh mục này'),
-            ),
-          );
-        }
-
-        return SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          sliver: SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.8,
-              crossAxisSpacing: 16.w,
-              mainAxisSpacing: 16.w,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final service = filteredServices[index];
-                return _buildServiceCard(service);
-              },
-              childCount: filteredServices.length,
-            ),
-          ),
-        );
       },
     );
   }
+
+  Widget _buildServiceGrid(List<StoreServiceModel>? services) {
+    if (services == null || services.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Text('Không có dịch vụ được đề xuất'),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.8,
+          crossAxisSpacing: 16.w,
+          mainAxisSpacing: 16.w,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final service = services[index];
+            return _buildServiceCard(service);
+          },
+          childCount: services.length,
+        ),
+      ),
+    );
+  }
+
+  // Thêm widget hiển thị grid cửa hàng
+  Widget _buildStoreGrid(List<StoreModel>? stores) {
+    if (stores == null || stores.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Text('Không tìm thấy cửa hàng nào gần bạn'),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.8,
+          crossAxisSpacing: 16.w,
+          mainAxisSpacing: 16.w,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final store = stores[index];
+            return _buildStoreCard(store);
+          },
+          childCount: stores.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStoreCard(StoreModel store) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16.r),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16.r),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StoreDetailLayout(
+                storeId: store.id,
+              ),
+            ),
+          );
+        },
+        child: Column(
+          children: [
+            // Image section với chiều cao cố định
+            SizedBox(
+              height: 120.h,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                child: Image.network(
+                  store.logo,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[200],
+                      child: Icon(Icons.store, size: 30.sp, color: Colors.grey[400]),
+                    );
+                  },
+                ),
+              ),
+            ),
+            // Content section với Expanded
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(8.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Store name
+                    Text(
+                      store.name,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 4.h),
+                    // Address
+                    Expanded(
+                      child: Text(
+                        store.address,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Distance
+                    if (store.distance != null)
+                      Text(
+                        '${(store.distance! / 1000).toStringAsFixed(1)} km',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: colors(context).primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
   Widget _buildBanner() {
     return Container(

@@ -10,16 +10,14 @@ class ChatService {
   final Ref ref;
   HubConnection? _hubConnection;
   bool _isConnecting = false;
-  final void Function(String content, int conversationId, int targetId)? onMessageReceived;
+  final void Function(String content, int conversationId, int targetId, List<String> attachments)? onMessageReceived;
 
   ChatService(this.ref, {this.onMessageReceived});
 
   Future<String?> _getAuthToken() async {
     try {
       final token = await ref.read(hiveStoreService).getAuthToken();
-      if (token == null) {
-        throw Exception('Authentication token not found');
-      }
+      if (token == null) throw Exception('Authentication token not found');
       return token;
     } catch (e) {
       print('Error getting auth token: $e');
@@ -30,7 +28,6 @@ class ChatService {
   Future<Map<String, String>> _getAuthHeaders() async {
     final token = await _getAuthToken();
     if (token == null) throw Exception('No authentication token available');
-    
     return {
       'Authorization': 'Bearer $token',
       'accept': '*/*',
@@ -38,14 +35,11 @@ class ChatService {
   }
 
   Future<void> connectToSignalR() async {
-    try {
-      if (_hubConnection?.state == HubConnectionState.connected || _isConnecting) {
-        return;
-      }
+    if (_hubConnection?.state == HubConnectionState.connected || _isConnecting) return;
 
+    try {
       _isConnecting = true;
       final token = await _getAuthToken();
-      
       if (token == null) {
         _isConnecting = false;
         return;
@@ -53,67 +47,52 @@ class ChatService {
 
       _hubConnection = HubConnectionBuilder()
           .withUrl(
-              'https://fluffypaw.azurewebsites.net/NotificationHub',
-              HttpConnectionOptions(
-                accessTokenFactory: () async => token,
-                transport: HttpTransportType.webSockets,
-                skipNegotiation: true,
-                logging: (level, message) => print('SignalR Chat Log: $message'),
-              ))
-          .withAutomaticReconnect([0, 2000, 10000, 30000]) // Add retry policy
+            'https://fluffypaw.azurewebsites.net/NotificationHub',
+            HttpConnectionOptions(
+              accessTokenFactory: () async => token,
+              transport: HttpTransportType.webSockets,
+              skipNegotiation: true,
+              logging: (level, message) => print('SignalR Chat Log: $message'),
+            ))
+          .withAutomaticReconnect([0, 2000, 10000, 30000])
           .build();
 
-      _setupMessageHandlers();
-
+      _hubConnection?.on("MessageNoti", _handleMessageNotification);
+      
       await _hubConnection?.start();
       _isConnecting = false;
       print('SignalR Chat: Connected successfully');
     } catch (e) {
       _isConnecting = false;
       print('SignalR Chat Error: $e');
-      // Try to reconnect after error
       await Future.delayed(const Duration(seconds: 5));
       connectToSignalR();
     }
   }
 
-  void _setupMessageHandlers() {
-    // Log tất cả các message nhận được để debug
-    _hubConnection?.on("", (messages) {
-      print("Raw SignalR message received: $messages");
-    });
-
-    // Thử đăng ký cả ReceiveMessage và MessageNoti
-    _hubConnection?.on("MessageNoti", (arguments) {
-      print('Received ReceiveMessage: $arguments');
-      _handleMessageNotification(arguments);
-    });
-
-    _hubConnection?.on("ReceiveNoti", (arguments) {
-      print('Received ReceiveNoti: $arguments');
-      _handleMessageNotification(arguments);
-    });
-  }
-
   void _handleMessageNotification(List<dynamic>? arguments) {
-    if (arguments != null && arguments.length >= 5) {
-      try {
-        final senderId = int.parse(arguments[0].toString());
-        final receiverId = int.parse(arguments[1].toString());
-        final notification = arguments[2].toString();
-        final type = arguments[3].toString();
-        final referenceId = int.tryParse(arguments[4].toString()) ?? 0;
-        
-        print('Parsed notification: senderId=$senderId, receiverId=$receiverId, message=$notification, type=$type, referenceId=$referenceId');
-        
-        if (type == "Message") {
-          onMessageReceived?.call(notification, referenceId, senderId);
-        }
-      } catch (e) {
-        print('Error handling notification: $e');
+    if (arguments == null || arguments.length < 6) {
+      print('Invalid message format: ${arguments?.length} arguments');
+      return;
+    }
+
+    try {
+      final senderId = int.parse(arguments[0].toString());
+      final receiverId = int.parse(arguments[1].toString());
+      final message = arguments[2].toString();
+      final attachments = (arguments[3] as List).map((url) => url.toString()).toList();
+      final type = arguments[4].toString();
+      final conversationId = int.parse(arguments[5].toString());
+
+      print('Parsed notification: senderId=$senderId, receiverId=$receiverId, '
+          'message=$message, attachments=$attachments, type=$type, '
+          'conversationId=$conversationId');
+
+      if (type == "Message") {
+        onMessageReceived?.call(message, conversationId, senderId, attachments);
       }
-    } else {
-      print('Invalid notification format: $arguments');
+    } catch (e) {
+      print('Error parsing message: $e\nRaw arguments: $arguments');
     }
   }
 
@@ -133,32 +112,22 @@ class ChatService {
     final headers = await _getAuthHeaders();
     headers['Content-Type'] = 'multipart/form-data';
 
-    Map<String, dynamic> formMap = {
+    final formMap = {
       'ConversationId': conversationId,
       'Content': content,
+      if (replyMessageId != null) 'ReplyMessageId': replyMessageId,
+      if (files != null && files.isNotEmpty)
+        'Files': await Future.wait(
+          files.map((file) async {
+            final fileName = file.path.split('/').last;
+            return await MultipartFile.fromFile(file.path, filename: fileName);
+          }),
+        ),
     };
-    
-    if (replyMessageId != null) {
-      formMap['ReplyMessageId'] = replyMessageId;
-    }
-
-    if (files != null && files.isNotEmpty) {
-      List<MultipartFile> fileList = [];
-      for (var file in files) {
-        String fileName = file.path.split('/').last;
-        fileList.add(await MultipartFile.fromFile(
-          file.path,
-          filename: fileName,
-        ));
-      }
-      formMap['Files'] = fileList;
-    }
-
-    final formData = FormData.fromMap(formMap);
 
     return await ref.read(apiClientProvider).post(
       AppConstants.sendMessage,
-      data: formData,
+      data: FormData.fromMap(formMap),
       headers: headers,
     );
   }
@@ -175,6 +144,6 @@ class ChatService {
   }
 }
 
-final chatServiceProvider = Provider.family<ChatService, void Function(String, int, int)>(
+final chatServiceProvider = Provider.family<ChatService, void Function(String, int, int, List<String>)>(
   (ref, onMessageReceived) => ChatService(ref, onMessageReceived: onMessageReceived),
 );

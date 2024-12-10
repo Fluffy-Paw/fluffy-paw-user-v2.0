@@ -3,6 +3,7 @@ import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
+import 'package:fluffypawuser/models/booking/booking_data_model.dart';
 import 'package:fluffypawuser/views/store/layouts/booking_confirmation_layout.dart';
 import 'package:fluffypawuser/views/store/layouts/service_time_layout.dart';
 import 'package:flutter/material.dart';
@@ -12,16 +13,15 @@ import 'package:fluffypawuser/models/pet/pet_model.dart';
 import 'package:gap/gap.dart';
 
 class ChoosePetForBookingLayout extends ConsumerStatefulWidget {
-  final int serviceTypeId;
-  final int timeSlotId;
-  final int storeId;
+  // final int serviceTypeId;
+  // final int timeSlotId;
+  // final int storeId;
+  final BookingDataModel bookingData;
   
 
   const ChoosePetForBookingLayout({
     super.key,
-    required this.serviceTypeId,
-    required this.timeSlotId,
-    required this.storeId
+    required this.bookingData
   });
 
   @override
@@ -65,10 +65,8 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
       context,
       MaterialPageRoute(
         builder: (context) => BookingConfirmationLayout(
+          bookingData: widget.bookingData,
           selectedPetIds: selectedPetIds.toList(),
-          timeSlotId: widget.timeSlotId,
-          storeServiceId: widget.serviceTypeId,
-          storeId: widget.storeId,
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
+import 'package:fluffypawuser/models/booking/booking_data_model.dart';
 import 'package:fluffypawuser/models/store/service_time_model.dart';
 import 'package:fluffypawuser/models/store/store_model.dart';
 import 'package:fluffypawuser/views/store/layouts/choose_pet_for_booking_layout.dart';
@@ -36,6 +37,7 @@ class _ServiceTimeSelectionScreenState
   bool isLoading = true;
   List<ServiceTimeModel> allTimeSlots = [];
   ServiceTimeModel? selectedTimeSlot;
+  Set<DateTime> availableDates = {};
 
   @override
   void initState() {
@@ -48,7 +50,6 @@ class _ServiceTimeSelectionScreenState
 
     setState(() => isLoading = true);
     try {
-      // Load initial service time data
       final controller = ref.read(storeController.notifier);
       await controller.getServiceTime(widget.serviceId);
 
@@ -56,15 +57,24 @@ class _ServiceTimeSelectionScreenState
 
       final timeSlots = controller.serviceTime ?? [];
 
-      // Load store details for each unique storeId
-      final uniqueStoreIds = timeSlots.map((slot) => slot.storeId).toSet();
+      // Extract available dates from time slots
+      availableDates = timeSlots
+          .map((slot) => DateTime(
+              slot.startTime.year, slot.startTime.month, slot.startTime.day))
+          .toSet();
 
+      // If selected date has no slots, select first available date
+      if (!availableDates.contains(
+          DateTime(selectedDate.year, selectedDate.month, selectedDate.day))) {
+        if (availableDates.isNotEmpty) {
+          selectedDate = availableDates.first;
+        }
+      }
+
+      // Load store details...
+      final uniqueStoreIds = timeSlots.map((slot) => slot.storeId).toSet();
       for (final storeId in uniqueStoreIds) {
         if (!mounted) return;
-
-        // Clear previous store selection before loading new one
-        //controller.clearSelectedStore();
-
         await controller.getStoreById(storeId);
         final store = controller.selectedStore;
         if (store != null) {
@@ -73,7 +83,6 @@ class _ServiceTimeSelectionScreenState
       }
 
       if (!mounted) return;
-
       setState(() {
         allTimeSlots = timeSlots;
         isLoading = false;
@@ -81,9 +90,7 @@ class _ServiceTimeSelectionScreenState
     } catch (e) {
       debugPrint('Error loading data: $e');
       if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading time slots: ${e.toString()}')),
         );
@@ -151,18 +158,7 @@ class _ServiceTimeSelectionScreenState
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChoosePetForBookingLayout(
-                      serviceTypeId: widget.serviceId,
-                      timeSlotId: selectedTimeSlot!.id,
-                      storeId: selectedTimeSlot!.storeId,
-                    ),
-                  ),
-                );
-              },
+              onPressed: selectedTimeSlot != null ? onSelectTimeSlot : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.violetColor,
                 padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -182,6 +178,14 @@ class _ServiceTimeSelectionScreenState
   }
 
   Widget _buildDateSelector() {
+    // Find the last available date
+    final lastAvailableDate = availableDates.isEmpty
+        ? DateTime.now()
+        : availableDates.reduce((a, b) => a.isAfter(b) ? a : b);
+
+    // Calculate number of days to show
+    final daysToShow = lastAvailableDate.difference(DateTime.now()).inDays + 1;
+
     return Container(
       height: 100.h,
       padding: EdgeInsets.symmetric(vertical: 12.h),
@@ -189,9 +193,16 @@ class _ServiceTimeSelectionScreenState
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        itemCount: 14, // Show next 14 days
+        itemCount: daysToShow,
         itemBuilder: (context, index) {
           final date = DateTime.now().add(Duration(days: index));
+          final normalizedDate = DateTime(date.year, date.month, date.day);
+
+          // Skip dates that don't have available slots
+          if (!availableDates.contains(normalizedDate)) {
+            return SizedBox.shrink();
+          }
+
           final isSelected = DateUtils.isSameDay(date, selectedDate);
 
           return GestureDetector(
@@ -436,4 +447,49 @@ class _ServiceTimeSelectionScreenState
       },
     );
   }
+
+  void onSelectTimeSlot() async {
+  if (selectedTimeSlot == null) return;
+  
+  try {
+    final controller = ref.read(storeController.notifier);
+    
+    // Load store service first
+    await controller.getStoreServiceByStoreId(selectedTimeSlot!.storeId);
+    
+    final service = controller.storeServices?.firstWhere(
+      (s) => s.id == widget.serviceId,
+    );
+    
+    if (service == null) {
+      throw Exception('Service not found');
+    }
+
+    final store = storeDetails[selectedTimeSlot!.storeId];
+    if (store == null) {
+      throw Exception('Store not found'); 
+    }
+
+    final bookingData = BookingDataModel(
+      store: store,
+      timeSlot: selectedTimeSlot!,
+      service: service,
+    );
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChoosePetForBookingLayout(
+            bookingData: bookingData,
+          ),
+        ),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: ${e.toString()}')),
+    );
+  }
+}
 }

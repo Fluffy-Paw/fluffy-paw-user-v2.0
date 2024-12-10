@@ -9,6 +9,8 @@ import 'package:fluffypawuser/models/store/store_service_model.dart';
 import 'package:fluffypawuser/services/store_service_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 class StoreController extends StateNotifier<bool> {
   List<ServiceTypeModel>? _serviceTypeModel;
@@ -36,6 +38,10 @@ class StoreController extends StateNotifier<bool> {
   List<StoreServiceModel>? get recommendedServices => _recommendedServices;
   List<StoreServiceModel>? _top6Services;
   List<StoreServiceModel>? get top6Services => _top6Services;
+  Position? _currentPosition;
+  Position? get currentPosition => _currentPosition;
+  List<StoreModel>? _sortedStores;
+  List<StoreModel>? get sortedStores => _sortedStores;
 
   final Ref ref;
   StoreController(this.ref) : super(false);
@@ -490,6 +496,72 @@ class StoreController extends StateNotifier<bool> {
     } catch (e) {
       state = false;
       debugPrint('Error getting brand: ${e.toString()}');
+      rethrow;
+    }
+  }
+  //For get near store
+  Future<Position?> getCurrentLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high
+      );
+      _currentPosition = position;
+      return position;
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+      return null;
+    }
+  }
+  Future<double> calculateDistance(double lat1, double lon1, String address) async {
+    // Sử dụng geocoding để chuyển đổi địa chỉ thành tọa độ
+    try {
+      final locations = await locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        return Geolocator.distanceBetween(
+          lat1, lon1, location.latitude, location.longitude
+        );
+      }
+    } catch (e) {
+      debugPrint('Error calculating distance: $e');
+    }
+    return double.infinity;
+  }
+  Future<void> getAllStoreWithDistance() async {
+    try {
+      state = true;
+      final position = await getCurrentLocation();
+      final response = await ref.read(storeServiceProvider).getAllStore();
+
+      if (response.data['data'] != null) {
+        final List<dynamic> storeList = response.data['data'];
+        _storeModel = storeList
+            .map((store) => StoreModel.fromMap(Map<String, dynamic>.from(store)))
+            .toList();
+
+        // Nếu có vị trí hiện tại, tính khoảng cách và sắp xếp
+        if (position != null) {
+          for (var store in _storeModel!) {
+            final distance = await calculateDistance(
+              position.latitude,
+              position.longitude,
+              store.address
+            );
+            store.distance = distance;
+          }
+
+          // Sắp xếp theo khoảng cách
+          _sortedStores = List.from(_storeModel!);
+          _sortedStores!.sort((a, b) => 
+            (a.distance ?? double.infinity).compareTo(b.distance ?? double.infinity)
+          );
+        }
+      }
+
+      state = false;
+    } catch (e) {
+      state = false;
+      debugPrint('Error getting all stores: ${e.toString()}');
       rethrow;
     }
   }

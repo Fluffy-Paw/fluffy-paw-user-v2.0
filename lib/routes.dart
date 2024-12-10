@@ -1,3 +1,4 @@
+import 'package:fluffypawuser/models/booking/booking_data_model.dart';
 import 'package:fluffypawuser/views/authentication/login_view.dart';
 import 'package:fluffypawuser/views/authentication/phone_view.dart';
 import 'package:fluffypawuser/views/booking/layouts/booking_history_layout.dart';
@@ -83,15 +84,11 @@ Route generatedRoutes(RouteSettings settings) {
       child = const PetListView();
       break;
     case Routes.choosePetForBooking:
-      final serviceTypeId = settings.arguments as int;
-      final timeSlotId = settings.arguments as int;
-      final storeId = settings.arguments as int;
-      child = ChoosePetForBookingView(
-        serviceTypeId: serviceTypeId,
-        timeSlotId: timeSlotId,
-        storeId: storeId,
-      );
-      break;
+  final args = settings.arguments as ChoosePetForBookingArguments;
+  child = ChoosePetForBookingView(
+    bookingData: args.bookingData,
+  );
+  break;
     case Routes.createPet:
       final id = settings.arguments as int;
       child = CreatePetView(id: id);
@@ -146,4 +143,13 @@ Route generatedRoutes(RouteSettings settings) {
     duration: const Duration(milliseconds: 300),
     reverseDuration: const Duration(milliseconds: 300),
   );
+}
+
+
+class ChoosePetForBookingArguments {
+  final BookingDataModel bookingData;
+  
+  ChoosePetForBookingArguments({
+    required this.bookingData,
+  });
 }

@@ -10,8 +10,9 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
   final Ref ref;
   final int conversationId;
   late final ChatService _chatService;
-  
-  ChatController(this.ref, this.conversationId) : super(const AsyncValue.loading()) {
+
+  ChatController(this.ref, this.conversationId)
+      : super(const AsyncValue.loading()) {
     _chatService = ref.read(chatServiceProvider(_handleNewMessage));
     _initialize();
   }
@@ -20,16 +21,32 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
     await _chatService.connectToSignalR();
     getMessages();
   }
+
+  void updateMessage(Message newMessage) {
+    if (state.hasValue) {
+      final currentState = state.value!;
+      state = AsyncValue.data(ChatPagination(
+        items: [...currentState.items, newMessage],
+        totalItems: currentState.totalItems + 1,
+        currentPage: currentState.currentPage,
+        totalPages: currentState.totalPages,
+        pageSize: currentState.pageSize,
+        hasPreviousPage: currentState.hasPreviousPage,
+        hasNextPage: currentState.hasNextPage,
+      ));
+    }
+  }
+
   Future<int> _getCurrentUserId() async {
     try {
       final token = await ref.read(hiveStoreService).getAuthToken();
       if (token == null) return 7; // Default to user ID if no token
-      
+
       final parts = token.split('.');
       final payload = base64Url.normalize(parts[1]);
       final resp = utf8.decode(base64Url.decode(payload));
       final map = json.decode(resp);
-      
+
       return int.parse(map['id'].toString());
     } catch (e) {
       print('Error getting user ID: $e');
@@ -37,35 +54,39 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
     }
   }
 
-  void _handleNewMessage(String content, int messageConversationId, int targetId) {
-    if (messageConversationId == conversationId) {
-      if (state.hasValue) {
-        final currentState = state.value!;
-        
-        final newMessage = Message(
-          id: DateTime.now().millisecondsSinceEpoch,
-          conversationId: messageConversationId,
-          senderId: targetId, // Use target ID as sender
-          content: content,
-          createTime: DateTime.now(),
-          isSeen: false,
-          isDelete: false,
-          replyMessageId: 0,
-          deleteAt: null,
-          files: [],
-        );
+  void _handleNewMessage(String content, int messageConversationId,
+      int targetId, List<String> attachments) {
+    if (messageConversationId == conversationId && state.hasValue) {
+      final currentState = state.value!;
+      final newMessage = Message(
+        id: DateTime.now().millisecondsSinceEpoch,
+        conversationId: messageConversationId,
+        senderId: targetId,
+        content: content,
+        createTime: DateTime.now(),
+        isDelete: false,
+        replyMessageId: 0,
+        isSeen: false,
+        deleteAt: null,
+        files: attachments
+            .map((url) => MessageFile(
+                  id: DateTime.now().millisecondsSinceEpoch,
+                  file: url,
+                  createDate: DateTime.now(),
+                  status: true,
+                ))
+            .toList(),
+      );
 
-        final updatedMessages = [...currentState.items, newMessage];
-        state = AsyncValue.data(ChatPagination(
-          items: updatedMessages,
-          totalItems: currentState.totalItems + 1,
-          currentPage: currentState.currentPage,
-          totalPages: currentState.totalPages,
-          pageSize: currentState.pageSize,
-          hasPreviousPage: currentState.hasPreviousPage,
-          hasNextPage: currentState.hasNextPage,
-        ));
-      }
+      state = AsyncValue.data(ChatPagination(
+        items: [...currentState.items, newMessage],
+        totalItems: currentState.totalItems + 1,
+        currentPage: currentState.currentPage,
+        totalPages: currentState.totalPages,
+        pageSize: currentState.pageSize,
+        hasPreviousPage: currentState.hasPreviousPage,
+        hasNextPage: currentState.hasNextPage,
+      ));
     }
   }
 
@@ -73,7 +94,7 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
     try {
       state = const AsyncValue.loading();
       final response = await _chatService.getMessages(conversationId);
-      
+
       if (response.data['statusCode'] == 200 && response.data['data'] != null) {
         final chatPagination = ChatPagination.fromMap(response.data['data']);
         state = AsyncValue.data(chatPagination);
@@ -92,22 +113,35 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
     List<File>? files,
   }) async {
     try {
-      // Add optimistic update before sending
       if (state.hasValue) {
         final currentState = state.value!;
         final userId = await _getCurrentUserId();
-        
+
+        // Create optimistic files
+        List<MessageFile> optimisticFiles = [];
+        if (files != null) {
+          for (var file in files) {
+            optimisticFiles.add(MessageFile(
+              id: DateTime.now().millisecondsSinceEpoch + optimisticFiles.length,
+              file: file.path,
+              createDate: DateTime.now(),
+              status: false
+            ));
+          }
+        }
+
+        // Add optimistic message with files
         final optimisticMessage = Message(
           id: DateTime.now().millisecondsSinceEpoch,
           conversationId: conversationId,
-          senderId: userId, // Get actual user ID from token
+          senderId: userId,
           content: content,
           createTime: DateTime.now(),
           isSeen: false,
           isDelete: false,
           replyMessageId: replyMessageId ?? 0,
           deleteAt: null,
-          files: [],
+          files: optimisticFiles,
         );
 
         final updatedMessages = [...currentState.items, optimisticMessage];
@@ -122,6 +156,7 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
         ));
       }
 
+      // Send actual message
       final response = await _chatService.sendMessage(
         conversationId: conversationId,
         content: content,
@@ -129,13 +164,22 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
         files: files,
       );
 
+      // Update with server response if needed
+      if (response.data['statusCode'] == 200 && files?.isNotEmpty == true) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        final serverResponse = await _chatService.getMessages(conversationId);
+        if (serverResponse.data['statusCode'] == 200) {
+          final chatPagination = ChatPagination.fromMap(serverResponse.data['data']);
+          state = AsyncValue.data(chatPagination);
+        }
+      }
+
       return response.data['statusCode'] == 200;
     } catch (e) {
       debugPrint('Error sending message: $e');
       return false;
     }
   }
-
   @override
   void dispose() {
     _chatService.disconnect();
@@ -143,6 +187,7 @@ class ChatController extends StateNotifier<AsyncValue<ChatPagination>> {
   }
 }
 
-final chatControllerProvider = StateNotifierProvider.family<ChatController, AsyncValue<ChatPagination>, int>(
+final chatControllerProvider = StateNotifierProvider.family<ChatController,
+    AsyncValue<ChatPagination>, int>(
   (ref, conversationId) => ChatController(ref, conversationId),
 );
