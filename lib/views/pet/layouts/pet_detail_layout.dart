@@ -191,7 +191,7 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
                     ),
                     Gap(5.h),
                     Text(
-                      'DOB: ${pet.dob}',
+                      'DOB: ${_formatDate(pet.dob)}',
                       style: AppTextStyle(context)
                           .bodyText
                           .copyWith(fontSize: 14, fontWeight: FontWeight.w400),
@@ -321,7 +321,7 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
               Expanded(
                 child: _buildInfoColumn(
                   title: S.of(context).dateOfBirth,
-                  value: pet.dob,
+                  value: _formatDate(pet.dob),
                   context: context,
                 ),
               ),
@@ -620,7 +620,7 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
                       ),
                       Gap(8.h),
                       Text(
-                        DateFormat('dd MMM yyyy').format(vaccine.vaccineDate),
+                        _formatDate(vaccine.vaccineDate.toString()),
                         style: AppTextStyle(context).bodyTextSmall.copyWith(
                               color: Colors.grey,
                             ),
@@ -642,6 +642,7 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
       ),
     );
   }
+
   Future<void> _showDeleteConfirmation() async {
     return showDialog(
       context: context,
@@ -666,5 +667,14 @@ class _PetDetailLayoutState extends ConsumerState<PetDetailLayout> {
         );
       },
     );
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final DateTime date = DateTime.parse(dateString);
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (e) {
+      return dateString; // Return original string if parsing fails
+    }
   }
 }

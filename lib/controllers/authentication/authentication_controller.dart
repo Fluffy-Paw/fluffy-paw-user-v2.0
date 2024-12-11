@@ -54,7 +54,7 @@ class AuthenticationController extends StateNotifier<bool> {
       ref.read(hiveStoreService).saveUserAuthToken(authToken: accessToken);
       ref.read(apiClientProvider).updateToken(token: accessToken);
       await ref.read(profileController.notifier).getAccountDetails();
-      await ref.read(petController.notifier).getPetList();
+      //await ref.read(petController.notifier).getPetList();
       state = false;
       return true;
     } catch (e) {

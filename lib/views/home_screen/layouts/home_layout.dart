@@ -1,6 +1,7 @@
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_constants.dart';
 import 'package:fluffypawuser/config/theme.dart';
+import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/gen/assets.gen.dart';
 import 'package:fluffypawuser/generated/l10n.dart';
@@ -13,6 +14,7 @@ import 'package:fluffypawuser/utils/context_less_navigation.dart';
 import 'package:fluffypawuser/views/recommend_service/recommended_Services_Screen.dart';
 import 'package:fluffypawuser/views/store/layouts/service_detail_layout.dart';
 import 'package:fluffypawuser/views/store/layouts/store_list_by_service_layout.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -28,53 +30,27 @@ class HomeLayout extends ConsumerStatefulWidget {
 }
 
 class _HomeState extends ConsumerState<HomeLayout> {
-  List<PetModel> pets = [];
   UserModel? userInfo;
   bool isLoading = true;
   List<StoreServiceModel>? recommendedServices;
+  late final Box petBox;
+  late final ValueListenable<Box> petBoxListenable;
+  
 
   @override
   void initState() {
     super.initState();
+    _setupBoxes();
     _initializeData();
   }
 
-  Future<void> _initializeData() async {
-    // Load cached data first
-    await _loadCachedData();
-    // Then load fresh data
-    await loadData();
+  Future<void> _setupBoxes() async {
+    petBox = await Hive.openBox(AppConstants.petBox);
+    petBoxListenable = petBox.listenable();
   }
 
-  Future<void> _loadCachedData() async {
-    try {
-      if (Hive.isBoxOpen(AppConstants.userBox)) {
-        final userBox = Hive.box(AppConstants.userBox);
-        final userData = userBox.get(AppConstants.userData);
-        if (userData != null) {
-          setState(() {
-            userInfo = UserModel.fromMap(Map<String, dynamic>.from(userData));
-            isLoading = false;
-          });
-        }
-      }
-
-      if (Hive.isBoxOpen(AppConstants.petBox)) {
-        final petBox = Hive.box(AppConstants.petBox);
-        final petData =
-            petBox.get(AppConstants.petData, defaultValue: []) as List;
-        if (petData.isNotEmpty) {
-          setState(() {
-            pets = petData
-                .map(
-                    (data) => PetModel.fromMap(Map<String, dynamic>.from(data)))
-                .toList();
-          });
-        }
-      }
-    } catch (e) {
-      print('Error loading cached data: $e');
-    }
+  Future<void> _initializeData() async {
+    await loadData();
   }
 
   Future<void> loadData() async {
@@ -89,17 +65,9 @@ class _HomeState extends ConsumerState<HomeLayout> {
         userInfo = UserModel.fromMap(Map<String, dynamic>.from(userData));
       }
 
-      // Load pet data
-      final petBox = await Hive.openBox(AppConstants.petBox);
-      final petData =
-          petBox.get(AppConstants.petData, defaultValue: []) as List;
-      pets = petData
-          .map((data) => PetModel.fromMap(Map<String, dynamic>.from(data)))
-          .toList();
       await ref.read(storeController.notifier).getServiceTypeList();
       await ref.read(storeController.notifier).getTop6Services();
-      recommendedServices =
-          ref.read(storeController.notifier).recommendedServices;
+      recommendedServices = ref.read(storeController.notifier).recommendedServices;
     } catch (e) {
       print('Error loading data: $e');
     } finally {
@@ -107,6 +75,12 @@ class _HomeState extends ConsumerState<HomeLayout> {
         setState(() => isLoading = false);
       }
     }
+  }
+  List<PetModel> _getPetsFromBox() {
+    final petData = petBox.get(AppConstants.petData, defaultValue: []) as List;
+    return petData
+        .map((data) => PetModel.fromMap(Map<String, dynamic>.from(data)))
+        .toList();
   }
 
   Map<String, String> serviceIconMap = {
@@ -118,44 +92,57 @@ class _HomeState extends ConsumerState<HomeLayout> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: RefreshIndicator(
-        onRefresh: loadData,
-        child: SingleChildScrollView(
-          child: isLoading
-              ? Column(
-                  children: [
-                    _buildShimmerHeader(),
-                    SizedBox(height: 110.h),
-                    _buildShimmerServiceIcons(),
-                    SizedBox(height: 20.h),
-                    _buildShimmerPetCard(),
-                    SizedBox(height: 30.h),
-                    _buildShimmerRecommendedServices(),
-                  ],
-                )
-              : Stack(
-                  children: [
-                    Column(
-                      children: [
-                        _buildAppBar(),
-                        SizedBox(height: 110.h),
-                        _buildIconContainer(),
-                        SizedBox(height: 20.h),
-                        _buildTop6Services(),
-                      ],
-                    ),
-                    Positioned(
-                      top: 200.h,
-                      left: 0,
-                      right: 0,
-                      child: _buildPetCardContainer(),
-                    ),
-                  ],
-                ),
+    return WillPopScope(
+      onWillPop: () async {
+        await loadData();
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: RefreshIndicator(
+          onRefresh: loadData,
+          child: SingleChildScrollView(
+            child: isLoading
+                ? _buildLoadingState()
+                : _buildContent(),
+          ),
         ),
       ),
+    );
+  }
+   Widget _buildLoadingState() {
+    return Column(
+      children: [
+        _buildShimmerHeader(),
+        SizedBox(height: 110.h),
+        _buildShimmerServiceIcons(),
+        SizedBox(height: 20.h),
+        _buildShimmerPetCard(),
+        SizedBox(height: 30.h),
+        _buildShimmerRecommendedServices(),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            _buildAppBar(),
+            SizedBox(height: 110.h),
+            _buildIconContainer(),
+            SizedBox(height: 20.h),
+            _buildTop6Services(),
+          ],
+        ),
+        Positioned(
+          top: 200.h,
+          left: 0,
+          right: 0,
+          child: _buildPetCardContainer(),
+        ),
+      ],
     );
   }
 
@@ -343,12 +330,12 @@ class _HomeState extends ConsumerState<HomeLayout> {
       width: double.infinity,
       child: Stack(
         children: [
-          // Background Image từ local
+          // Background Image
           Container(
             height: 250.h,
             width: double.infinity,
             child: Image.asset(
-              Assets.image.background.path, // Tên file ảnh của bạn
+              Assets.image.background.path,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 print("Error loading image: $error");
@@ -373,126 +360,117 @@ class _HomeState extends ConsumerState<HomeLayout> {
               ),
             ),
           ),
+          // Notification button
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             right: 20.w,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pushNamed(Routes.notification),
-              child: Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    SvgPicture.asset(
-                      Assets.svg
-                          .notification, // Assuming you have bell.svg in assets
-                      width: 24.w,
-                      height: 24.w,
-                      color: colors(context).primaryColor,
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        width: 8.w,
-                        height: 8.w,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: _buildNotificationButton(),
           ),
-          // Content
+          // User info content
           SafeArea(
             bottom: false,
             child: Padding(
               padding: EdgeInsets.only(
                   left: 20.w, right: 20.w, top: 60.h, bottom: 20.h),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2.w,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    // child: CircleAvatar(
-                    //   radius: 28.r,
-                    //   backgroundColor: Colors.white,
-                    //   child: ClipOval(
-                    //     child: Image.network(
-                    //       userInfo?.avatar ?? 'https://via.placeholder.com/56',
-                    //       width: 56.w,
-                    //       height: 56.h,
-                    //       fit: BoxFit.cover,
-                    //       errorBuilder: (context, error, stackTrace) {
-                    //         return Icon(Icons.person, size: 30.sp);
-                    //       },
-                    //     ),
-                    //   ),
-                    // ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    'Xin chào, ${userInfo?.fullName ?? "User"}',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 2),
-                          blurRadius: 3.0,
-                          color: Colors.black.withOpacity(0.3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    _getGreeting(),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 2),
-                          blurRadius: 3.0,
-                          color: Colors.black.withOpacity(0.3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 50.h),
-                ],
-              ),
+              child: _buildUserInfo(),
             ),
           ),
         ],
+      ),
+    );
+  }
+  Widget _buildUserInfo() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white,
+              width: 2.w,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 12.h),
+        Text(
+          'Xin chào, ${userInfo?.fullName ?? "User"}',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 2),
+                blurRadius: 3.0,
+                color: Colors.black.withOpacity(0.3),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          _getGreeting(),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 2),
+                blurRadius: 3.0,
+                color: Colors.black.withOpacity(0.3),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 50.h),
+      ],
+    );
+  }
+  Widget _buildNotificationButton() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed(Routes.notification),
+      child: Container(
+        padding: EdgeInsets.all(8.w),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            SvgPicture.asset(
+              Assets.svg.notification,
+              width: 24.w,
+              height: 24.w,
+              color: colors(context).primaryColor,
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                width: 8.w,
+                height: 8.w,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -619,14 +597,20 @@ class _HomeState extends ConsumerState<HomeLayout> {
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: SizedBox(
         height: 150.h,
-        child: pets.isEmpty
-            ? _buildAddNewPetCard()
-            : PageView(
-                children: [
-                  ...pets.map((pet) => _buildPetCard(pet)),
-                  _buildAddNewPetCard(),
-                ],
-              ),
+        child: ValueListenableBuilder(
+          valueListenable: petBoxListenable,
+          builder: (context, Box box, _) {
+            final pets = _getPetsFromBox();
+            return pets.isEmpty
+                ? _buildAddNewPetCard()
+                : PageView(
+                    children: [
+                      ...pets.map((pet) => _buildPetCard(pet)),
+                      _buildAddNewPetCard(),
+                    ],
+                  );
+          },
+        ),
       ),
     );
   }
@@ -672,7 +656,7 @@ class _HomeState extends ConsumerState<HomeLayout> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 5.w),
       decoration: BoxDecoration(
-        color: Colors.white, // Đổi thành màu nền trắng đục
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
           color: colors(context).primaryColor?.withOpacity(0.2) ??
@@ -707,11 +691,7 @@ class _HomeState extends ConsumerState<HomeLayout> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    pet.petCategoryId == 2
-                        ? "Mèo"
-                        : pet.petCategoryId == 1
-                            ? "Chó"
-                            : "meo",
+                    pet.petCategoryId == 2 ? "Mèo" : "Chó",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           height: 1.4,
                         ),
@@ -720,58 +700,61 @@ class _HomeState extends ConsumerState<HomeLayout> {
                 ],
               ),
             ),
-            Container(
-              width: 60.w,
-              height: 60.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: colors(context).primaryColor?.withOpacity(0.2) ??
-                      Colors.grey.withOpacity(0.2),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 5,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Image.network(
-                  pet.image ?? 'https://via.placeholder.com/60',
-                  width: 60.w,
-                  height: 60.w,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[200],
-                      child: Icon(
-                        pet.petCategoryId == 2 ? Icons.pets : Icons.pets,
-                        size: 24.sp,
-                        color: primaryColor,
-                      ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                        color: primaryColor,
-                        strokeWidth: 2.w,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+            _buildPetAvatar(pet, primaryColor),
           ],
+        ),
+      ),
+    );
+  }
+  Widget _buildPetAvatar(PetModel pet, Color primaryColor) {
+    return Container(
+      width: 60.w,
+      height: 60.w,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: colors(context).primaryColor?.withOpacity(0.2) ??
+              Colors.grey.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child: Image.network(
+          pet.image ?? 'https://via.placeholder.com/60',
+          width: 60.w,
+          height: 60.w,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey[200],
+              child: Icon(
+                Icons.pets,
+                size: 24.sp,
+                color: primaryColor,
+              ),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                color: primaryColor,
+                strokeWidth: 2.w,
+              ),
+            );
+          },
         ),
       ),
     );
@@ -1039,14 +1022,16 @@ Widget _buildTop6ServiceCard(StoreServiceModel service) {
 
   Widget _buildAddNewPetCard() {
     return GestureDetector(
-      onTap: () {
-        debugPrint('Navigating to selectPetType');
-        Navigator.of(context).pushNamed(Routes.selectPetType);
+      onTap: () async {
+        await Navigator.of(context).pushNamed(Routes.selectPetType);
+        if (mounted) {
+          await ref.read(petController.notifier).getPetList();
+        }
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 5.w),
         decoration: BoxDecoration(
-          color: Colors.white, // Đổi thành màu nền trắng đục
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14.r),
           border: Border.all(
             color: colors(context).primaryColor?.withOpacity(0.2) ??

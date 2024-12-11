@@ -58,6 +58,8 @@ class _CreatePetLayoutState extends ConsumerState<CreatePetLayout> {
       selectedPet = widget.petType;
     });
     ref.read(isNeuterProvider).text = 'false';
+    GlobalFunction.clearControllers(ref: ref);
+
   }
 
   @override

@@ -85,28 +85,30 @@ class PetController extends StateNotifier<bool> {
   }
 
   Future<CommonResponse> addPet({
-    required PetRequest petRequest,
-    required File profile,
-  }) async {
-    try {
-      state = true;
-      final response = await ref.read(petServiceProvider).addPet(
-            request: petRequest,
-            profile: profile,
-          );
-      final message = response.data['message'];
-      if (response.statusCode == 200) {
-        state = false;
-        return CommonResponse(isSuccess: true, message: message);
-      }
+  required PetRequest petRequest,
+  required File profile,
+}) async {
+  try {
+    state = true;
+    final response = await ref.read(petServiceProvider).addPet(
+          request: petRequest,
+          profile: profile,
+        );
+    final message = response.data['message'];
+    if (response.statusCode == 200) {
+      // Thêm dòng này để refresh pet list sau khi add thành công
+      await getPetList();  
       state = false;
-      return CommonResponse(isSuccess: false, message: message);
-    } catch (e) {
-      debugPrint(e.toString());
-      state = false;
-      return CommonResponse(isSuccess: false, message: e.toString());
+      return CommonResponse(isSuccess: true, message: message);
     }
+    state = false;
+    return CommonResponse(isSuccess: false, message: message);
+  } catch (e) {
+    debugPrint(e.toString());
+    state = false;
+    return CommonResponse(isSuccess: false, message: e.toString());
   }
+}
 
   Future<void> getPetType(int petTypeId) async {
     try {

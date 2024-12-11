@@ -157,5 +157,9 @@
   "petInfo": "Pet Information",
   "age": "Age",
   "behavior": "Behavior",
-  "petType": "Pet Type"
+  "petType": "Pet Type",
+  "noPetsFound":"No Pets Found",
+  "noMatchingPets": "No Matching Pet",
+  "searchYourPet":"Search Your Pet",
+  "myPets":"My Pets"
 }

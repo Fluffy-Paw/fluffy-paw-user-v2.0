@@ -507,7 +507,6 @@ class _RecommendedServicesScreenState
         },
         child: Column(
           children: [
-            // Image section với chiều cao cố định
             SizedBox(
               height: 120.h,
               width: double.infinity,

@@ -27,6 +27,7 @@ class PetListLayout extends ConsumerStatefulWidget {
 class _PetListLayoutState extends ConsumerState<PetListLayout> {
   final TextEditingController searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -40,6 +41,22 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       ref.read(petController.notifier).getPetList();
     });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  List<PetModel> _filterPets(List<PetModel> pets, String query) {
+    if (query.isEmpty) return pets;
+    
+    final lowercaseQuery = query.toLowerCase().trim();
+    return pets.where((pet) => 
+      pet.name.toLowerCase().contains(lowercaseQuery)
+    ).toList();
   }
 
   @override
@@ -65,7 +82,7 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
                 ],
               ),
             ),
-            Flexible(flex: 5, child: buildBody()),
+            Expanded(child: buildBody()),
           ],
         ),
       ),
@@ -83,6 +100,14 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
               Navigator.pop(context);
             },
           ),
+          Expanded(
+            child: Text(
+              S.of(context).myPets,
+              style: AppTextStyle(context).title,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 40), // Balance the back button
         ],
       ),
     );
@@ -103,8 +128,11 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            S.of(context).pet,
-            style: AppTextStyle(context).subTitle,
+            S.of(context).searchYourPet,
+            style: AppTextStyle(context).bodyText.copyWith(
+              color: Colors.grey,
+              fontSize: 14.sp,
+            ),
           ),
           Gap(10.h),
           SizedBox(
@@ -118,9 +146,21 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
                     textInputType: TextInputType.text,
                     controller: searchController,
                     onChanged: (value) {
-                      // Xử lý tìm kiếm nếu cần
+                      setState(() {
+                        searchQuery = value!;
+                      });
                     },
-                    widget: const SizedBox(),
+                    widget: searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.grey),
+                          onPressed: () {
+                            searchController.clear();
+                            setState(() {
+                              searchQuery = '';
+                            });
+                          },
+                        )
+                      : const SizedBox(),
                   ),
                 ),
                 Gap(5.w),
@@ -160,6 +200,9 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
             child: RefreshIndicator(
               onRefresh: () async {
                 searchController.clear();
+                setState(() {
+                  searchQuery = '';
+                });
                 await ref.read(petController.notifier).getPetList();
               },
               child: FutureBuilder<Box>(
@@ -171,18 +214,44 @@ class _PetListLayoutState extends ConsumerState<PetListLayout> {
                   
                   final petBox = snapshot.data!;
                   final petData = petBox.get(AppConstants.petData, defaultValue: []) as List;
-                  final pets = petData
+                  final allPets = petData
                       .map((data) => PetModel.fromMap(Map<String, dynamic>.from(data)))
                       .toList();
+                  
+                  final filteredPets = _filterPets(allPets, searchQuery);
+
+                  if (filteredPets.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.pets,
+                            size: 64.sp,
+                            color: Colors.grey,
+                          ),
+                          Gap(16.h),
+                          Text(
+                            searchQuery.isEmpty 
+                              ? S.of(context).noPetsFound
+                              : S.of(context).noMatchingPets,
+                            style: AppTextStyle(context).bodyText.copyWith(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
                   return ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
                     shrinkWrap: true,
                     padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
                     controller: scrollController,
-                    itemCount: pets.length,
+                    itemCount: filteredPets.length,
                     itemBuilder: (context, index) {
-                      final pet = pets[index];
+                      final pet = filteredPets[index];
                       return AnimationConfiguration.staggeredList(
                         duration: const Duration(milliseconds: 500),
                         position: index,

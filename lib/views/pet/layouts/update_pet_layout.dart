@@ -15,6 +15,7 @@ import 'package:fluffypawuser/views/authentication/components/gender_menu.dart';
 import 'package:fluffypawuser/views/pet/layouts/behavior_cateogry_select_layout.dart';
 import 'package:fluffypawuser/views/pet/layouts/pet_type_select_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -95,6 +96,7 @@ class _UpdatePetLayoutState extends ConsumerState<UpdatePetLayout> {
     for (var node in fNodeList) {
       node.dispose();
     }
+    GlobalFunction.clearControllers(ref: ref);
     super.dispose();
   }
 
@@ -486,14 +488,28 @@ class _UpdatePetLayoutState extends ConsumerState<UpdatePetLayout> {
                     name: 'weight',
                     focusNode: fNodeList[3],
                     hintText: S.of(context).weight,
-                    textInputType: TextInputType.number,
+                    textInputType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}')),
+                    ],
                     controller: ref.watch(weightProvider),
                     textInputAction: TextInputAction.next,
-                    validator: (value) => GlobalFunction.weightValidator(
-                      value: value!,
-                      hintText: S.of(context).weight,
-                      context: context,
-                    ),
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) {
+                        return 'Please enter weight';
+                      }
+                      try {
+                        final double weight = double.parse(value!);
+                        if (weight <= 0 || weight > 100) {
+                          return 'Weight must be between 0 and 100kg';
+                        }
+                      } catch (e) {
+                        return 'Please enter a valid number';
+                      }
+                      return null;
+                    },
                   ),
                   Gap(20.h),
 

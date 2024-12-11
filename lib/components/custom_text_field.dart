@@ -2,6 +2,7 @@ import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/config/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -17,7 +18,8 @@ class CustomTextFormField extends StatelessWidget {
   final Widget? widget;
   final bool? obscureText;
   final int? minLines;
-  final bool? enabled; // Thêm enabled parameter
+  final bool? enabled;
+  final List<TextInputFormatter>? inputFormatters;  // Add this line
 
   const CustomTextFormField({
     Key? key,
@@ -32,7 +34,8 @@ class CustomTextFormField extends StatelessWidget {
     this.widget,
     this.obscureText,
     this.minLines,
-    this.enabled, // Thêm vào constructor
+    this.enabled,
+    this.inputFormatters,  // Add this line
   }) : super(key: key);
 
   @override
@@ -40,7 +43,7 @@ class CustomTextFormField extends StatelessWidget {
     return AbsorbPointer(
       absorbing: readOnly ?? false,
       child: FormBuilderTextField(
-        enabled: enabled ?? true, // Thêm enabled với default value là true
+        enabled: enabled ?? true,
         readOnly: readOnly ?? false,
         textAlign: TextAlign.start,
         minLines: minLines ?? 1,
@@ -49,6 +52,7 @@ class CustomTextFormField extends StatelessWidget {
         focusNode: focusNode,
         controller: controller,
         obscureText: obscureText ?? false,
+        inputFormatters: inputFormatters,  // Add this line
         style: AppTextStyle(context).bodyText.copyWith(
               fontWeight: FontWeight.w500,
               color: AppColor.blackColor,

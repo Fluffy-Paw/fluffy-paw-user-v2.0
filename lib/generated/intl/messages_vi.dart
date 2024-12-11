@@ -167,8 +167,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "microchip_number": MessageLookupByLibrary.simpleMessage("Số chip"),
         "most_used_services": MessageLookupByLibrary.simpleMessage(
             "Dịch vụ được sử dụng nhiều nhất!"),
+        "myPets": MessageLookupByLibrary.simpleMessage("Thú Cưng Của Tôi"),
         "next_vaccine_date":
             MessageLookupByLibrary.simpleMessage("Ngày tiêm nhắc"),
+        "noMatchingPets":
+            MessageLookupByLibrary.simpleMessage("Không Có Thú Cưng Phù Hợp"),
+        "noPetsFound":
+            MessageLookupByLibrary.simpleMessage("Không tìm thấy Thú Cưng"),
         "no_account":
             MessageLookupByLibrary.simpleMessage("Chưa có tài khoản?"),
         "no_behavior_categories_available":
@@ -202,6 +207,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "remember_me": MessageLookupByLibrary.simpleMessage("Ghi nhớ tôi"),
         "review_count": MessageLookupByLibrary.simpleMessage("230 đánh giá"),
         "searchByName": MessageLookupByLibrary.simpleMessage("Tìm theo tên"),
+        "searchYourPet":
+            MessageLookupByLibrary.simpleMessage("Tìm Kiếm Thú Cưng"),
         "selectPetType": MessageLookupByLibrary.simpleMessage("Chọn Giống Này"),
         "select_behavior_category":
             MessageLookupByLibrary.simpleMessage("Chọn hành vi đặc biệt"),

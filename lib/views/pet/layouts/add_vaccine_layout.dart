@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:fluffypawuser/controllers/vaccine/vaccine_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/models/vaccine/vaccine_request.dart';
+import 'package:fluffypawuser/utils/global_function.dart';
 
 class AddVaccineLayout extends ConsumerStatefulWidget {
   final int petId;
@@ -28,10 +30,14 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
   final _nameController = TextEditingController();
   final _weightController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   DateTime _vaccineDate = DateTime.now();
   DateTime _nextVaccineDate = DateTime.now().add(const Duration(days: 30));
   File? _selectedImage;
+
+  String _formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +49,9 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
         title: Text(
           'Add Vaccine Record',
           style: AppTextStyle(context).title.copyWith(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-          ),
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+              ),
         ),
       ),
       body: Form(
@@ -73,12 +79,21 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
                 controller: _weightController,
                 label: 'Current Weight (kg)',
                 placeholder: 'Enter pet\'s current weight',
-                keyboardType: TextInputType.number,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                ],
                 validator: (value) {
                   if (value?.isEmpty ?? true) {
                     return 'Please enter weight';
                   }
-                  if (double.tryParse(value!) == null) {
+                  try {
+                    final double weight = double.parse(value!);
+                    if (weight <= 0 || weight > 100) {
+                      return 'Weight must be between 0 and 100kg';
+                    }
+                  } catch (e) {
                     return 'Please enter a valid number';
                   }
                   return null;
@@ -91,7 +106,6 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
                 onChanged: (date) {
                   setState(() {
                     _vaccineDate = date;
-                    // Automatically set next vaccine date to 30 days after
                     _nextVaccineDate = date.add(const Duration(days: 30));
                   });
                 },
@@ -154,8 +168,8 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
                   Text(
                     'Add Vaccine Image',
                     style: AppTextStyle(context).bodyText.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                          color: Colors.grey[600],
+                        ),
                   ),
                 ],
               ),
@@ -170,6 +184,7 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
     TextInputType? keyboardType,
     int maxLines = 1,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,  // Add this parameter
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,6 +201,7 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
+          inputFormatters: inputFormatters,  // Use the parameter here
           decoration: InputDecoration(
             hintText: placeholder,
             filled: true,
@@ -225,8 +241,8 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
         Text(
           label,
           style: AppTextStyle(context).bodyText.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         Gap(8.h),
         GestureDetector(
@@ -247,7 +263,7 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  DateFormat('dd MMM yyyy').format(date),
+                  _formatDate(date),
                   style: AppTextStyle(context).bodyText,
                 ),
                 Icon(
@@ -298,7 +314,7 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (image != null) {
       setState(() {
         _selectedImage = File(image.path);
@@ -306,7 +322,8 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
     }
   }
 
-  Future<void> _showDatePicker(DateTime initialDate, Function(DateTime) onChanged) async {
+  Future<void> _showDatePicker(
+      DateTime initialDate, Function(DateTime) onChanged) async {
     await showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) {
@@ -348,10 +365,11 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     if (_selectedImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a vaccine image')),
+      GlobalFunction.showCustomSnackbar(
+        message: 'Please select a vaccine image',
+        isSuccess: false,
       );
       return;
     }
@@ -367,20 +385,23 @@ class _AddVaccineLayoutState extends ConsumerState<AddVaccineLayout> {
         description: _descriptionController.text,
       );
 
-      final success = await ref.read(vaccineController.notifier).addVaccineForPet(
-        request: request,
-        vaccineImage: _selectedImage!,
-      );
+      final success =
+          await ref.read(vaccineController.notifier).addVaccineForPet(
+                request: request,
+                vaccineImage: _selectedImage!,
+              );
 
       if (success) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Vaccine record added successfully')),
+        GlobalFunction.showCustomSnackbar(
+          message: 'Vaccine record added successfully',
+          isSuccess: true,
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add vaccine record')),
+      GlobalFunction.showCustomSnackbar(
+        message: 'Failed to add vaccine record',
+        isSuccess: false,
       );
     }
   }

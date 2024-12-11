@@ -165,8 +165,12 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Microchip Number"),
         "most_used_services":
             MessageLookupByLibrary.simpleMessage("Most Used Services!"),
+        "myPets": MessageLookupByLibrary.simpleMessage("My Pets"),
         "next_vaccine_date":
             MessageLookupByLibrary.simpleMessage("Next Vaccine Date"),
+        "noMatchingPets":
+            MessageLookupByLibrary.simpleMessage("No Matching Pet"),
+        "noPetsFound": MessageLookupByLibrary.simpleMessage("No Pets Found"),
         "no_account":
             MessageLookupByLibrary.simpleMessage("Don\'t have an account?"),
         "no_behavior_categories_available":
@@ -200,6 +204,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "remember_me": MessageLookupByLibrary.simpleMessage("Remember me"),
         "review_count": MessageLookupByLibrary.simpleMessage("230 reviews"),
         "searchByName": MessageLookupByLibrary.simpleMessage("Search by name"),
+        "searchYourPet":
+            MessageLookupByLibrary.simpleMessage("Search Your Pet"),
         "selectPetType":
             MessageLookupByLibrary.simpleMessage("Select Pet Type"),
         "select_behavior_category":

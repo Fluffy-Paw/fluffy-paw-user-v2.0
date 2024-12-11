@@ -1529,6 +1529,46 @@ class S {
       args: [],
     );
   }
+
+  /// `No Pets Found`
+  String get noPetsFound {
+    return Intl.message(
+      'No Pets Found',
+      name: 'noPetsFound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No Matching Pet`
+  String get noMatchingPets {
+    return Intl.message(
+      'No Matching Pet',
+      name: 'noMatchingPets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search Your Pet`
+  String get searchYourPet {
+    return Intl.message(
+      'Search Your Pet',
+      name: 'searchYourPet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `My Pets`
+  String get myPets {
+    return Intl.message(
+      'My Pets',
+      name: 'myPets',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

@@ -72,7 +72,7 @@ class _SplashLayoutState extends ConsumerState<SplashLayout> {
       try {
         await Future.wait([
           ref.read(profileController.notifier).getAccountDetails(),
-          ref.read(petController.notifier).getPetList(),
+          //ref.read(petController.notifier).getPetList(),
         ]);
 
         if (mounted) {

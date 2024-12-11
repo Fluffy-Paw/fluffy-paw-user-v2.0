@@ -157,5 +157,9 @@
   "petInfo": "Thông tin thú cưng",
   "age": "Tuổi",
   "behavior": "Thói quen",
-  "petType": "Giống loại"
+  "petType": "Giống loại",
+  "noPetsFound":"Không tìm thấy Thú Cưng",
+  "noMatchingPets": "Không Có Thú Cưng Phù Hợp",
+  "searchYourPet":"Tìm Kiếm Thú Cưng",
+  "myPets":"Thú Cưng Của Tôi"
 }
