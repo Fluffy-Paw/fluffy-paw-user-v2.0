@@ -3,6 +3,7 @@ import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
 import 'package:fluffypawuser/controllers/hiveController/hive_controller.dart';
 import 'package:fluffypawuser/controllers/pet/pet_controller.dart';
+import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/booking/booking_data_model.dart';
 import 'package:fluffypawuser/views/store/layouts/booking_confirmation_layout.dart';
 import 'package:fluffypawuser/views/store/layouts/service_time_layout.dart';
@@ -17,37 +18,69 @@ class ChoosePetForBookingLayout extends ConsumerStatefulWidget {
   // final int timeSlotId;
   // final int storeId;
   final BookingDataModel bookingData;
-  
 
-  const ChoosePetForBookingLayout({
-    super.key,
-    required this.bookingData
-  });
+  const ChoosePetForBookingLayout({super.key, required this.bookingData});
 
   @override
-  ConsumerState<ChoosePetForBookingLayout> createState() => _ChoosePetForBookingLayoutState();
+  ConsumerState<ChoosePetForBookingLayout> createState() =>
+      _ChoosePetForBookingLayoutState();
 }
 
-class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingLayout> {
-  Set<int> selectedPetIds = {}; // Thay đổi từ single selection sang multiple selection
+class _ChoosePetForBookingLayoutState
+    extends ConsumerState<ChoosePetForBookingLayout> {
+  Set<int> selectedPetIds =
+      {}; // Thay đổi từ single selection sang multiple selection
   List<PetModel> pets = [];
+  bool isLoadingData = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadPets();
+      _loadData();
     });
   }
 
-  Future<void> _loadPets() async {
-    await ref.read(petController.notifier).getPetList();
-    if (mounted) {
-      setState(() {
-        pets = ref.read(hiveStoreService).getPetInfo() ?? [];
-      });
+  Future<void> _loadData() async {
+    setState(() {
+      isLoadingData = true;
+    });
+
+    try {
+      // Load cả pets và bookings
+      await Future.wait([
+        ref.read(petController.notifier).getPetList(),
+        ref.read(storeController.notifier).getAllBookings(),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          pets = ref.read(hiveStoreService).getPetInfo() ?? [];
+          isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading data: $e');
+      if (mounted) {
+        setState(() {
+          isLoadingData = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Có lỗi xảy ra khi tải dữ liệu: ${e.toString()}')),
+        );
+      }
     }
   }
+
+  // Future<void> _loadPets() async {
+  //   await ref.read(petController.notifier).getPetList();
+  //   if (mounted) {
+  //     setState(() {
+  //       pets = ref.read(hiveStoreService).getPetInfo() ?? [];
+  //     });
+  //   }
+  // }
 
   void togglePetSelection(int petId) {
     setState(() {
@@ -60,22 +93,23 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
   }
 
   void _confirmSelection() {
-  if (selectedPetIds.isNotEmpty) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingConfirmationLayout(
-          bookingData: widget.bookingData,
-          selectedPetIds: selectedPetIds.toList(),
+    if (selectedPetIds.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingConfirmationLayout(
+            bookingData: widget.bookingData,
+            selectedPetIds: selectedPetIds.toList(),
+          ),
         ),
-      ),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Vui lòng chọn ít nhất một thú cưng')),
-    );
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn ít nhất một thú cưng')),
+      );
+    }
   }
-}
+
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(petController);
@@ -88,9 +122,9 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
         title: Text(
           'Chọn thú cưng',
           style: AppTextStyle(context).title.copyWith(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.bold,
-          ),
+                fontSize: 20.sp,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, size: 20.sp),
@@ -98,7 +132,8 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(
+          ? const Center(
+              child: CircularProgressIndicator(
               color: AppColor.violetColor,
             ))
           : Column(
@@ -133,7 +168,8 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
                           GridView.builder(
                             shrinkWrap: true,
                             physics: NeverScrollableScrollPhysics(),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 16.w,
                               mainAxisSpacing: 16.h,
@@ -165,11 +201,13 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isAvailable =
+        isPetAvailableForTimeSlot(pet, widget.bookingData.timeSlot.startTime);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColor.whiteColor,
+          color: isAvailable ? AppColor.whiteColor : Colors.grey[100],
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: isSelected ? AppColor.violetColor : Colors.transparent,
@@ -231,9 +269,11 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
                       Text(
                         pet.name,
                         style: AppTextStyle(context).subTitle.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? AppColor.violetColor : AppColor.blackColor,
-                        ),
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? AppColor.violetColor
+                                  : AppColor.blackColor,
+                            ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -241,12 +281,32 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
                       Text(
                         '${pet.weight} kg',
                         style: AppTextStyle(context).bodyTextSmall.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                              color: Colors.grey[600],
+                            ),
                       ),
                     ],
                   ),
                 ),
+                if (!isAvailable)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(8.w),
+                        child: Text(
+                          'Đã có lịch trong khung giờ này',
+                          style: AppTextStyle(context).bodyText.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
             if (isSelected)
@@ -308,5 +368,36 @@ class _ChoosePetForBookingLayoutState extends ConsumerState<ChoosePetForBookingL
       ),
     );
   }
-  
+
+  bool isPetAvailableForTimeSlot(PetModel pet, DateTime bookingTime) {
+    // Lấy danh sách bookings từ state
+    final bookings = ref.read(storeController.notifier).bookings;
+    if (bookings == null) return true;
+
+    // Kiểm tra xem pet có booking nào trùng thời gian không
+    return !bookings.any((booking) {
+      // Chỉ kiểm tra các booking có status là pending hoặc confirmed
+      if (!['pending', 'confirmed'].contains(booking.status.toLowerCase())) {
+        return false;
+      }
+
+      // Kiểm tra xem booking có phải của pet này không
+      if (booking.petId != pet.id) {
+        return false;
+      }
+
+      // Kiểm tra thời gian
+      // Một booking được coi là trùng nếu:
+      // 1. Cùng ngày
+      // 2. Thời gian mới nằm trong khoảng thời gian của booking cũ
+      final newBookingTime = bookingTime;
+      final existingStartTime = booking.startTime;
+      final existingEndTime = booking.endTime;
+
+      return DateUtils.isSameDay(newBookingTime, existingStartTime) &&
+              (newBookingTime.isAfter(existingStartTime) &&
+                  newBookingTime.isBefore(existingEndTime)) ||
+          newBookingTime.isAtSameMomentAs(existingStartTime);
+    });
+  }
 }

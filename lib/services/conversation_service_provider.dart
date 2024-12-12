@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract class ConversationProvider {
   Future<Response> getAllConversations();
+  Future<Response> createConversation(int personId);
 }
 
 class ConversationServiceProvider implements ConversationProvider {
@@ -19,6 +20,15 @@ class ConversationServiceProvider implements ConversationProvider {
     final response = await ref
         .read(apiClientProvider)
         .get(AppConstants.getAllConversation);
+    return response;
+  }
+  @override
+  Future<Response> createConversation(int personId) async {
+    final response = await ref
+        .read(apiClientProvider)
+        .post(AppConstants.createConversation, data: {
+      'personId': personId,
+    });
     return response;
   }
   

@@ -3,6 +3,7 @@ import 'package:fluffypawuser/views/authentication/login_view.dart';
 import 'package:fluffypawuser/views/authentication/phone_view.dart';
 import 'package:fluffypawuser/views/booking/layouts/booking_history_layout.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/bottom_navigation_bar_view.dart';
+import 'package:fluffypawuser/views/forget_password/ForgetPasswordScreen.dart';
 import 'package:fluffypawuser/views/home_screen/layouts/home_layout.dart';
 import 'package:fluffypawuser/views/notification/notification_view.dart';
 import 'package:fluffypawuser/views/pet/add_vaccine_view.dart';
@@ -45,6 +46,7 @@ class Routes {
   static const profile = "/profile";
   static const notification = "/notification";
   static const storeServiceByType = "/storeServiceByType";
+  static const String forgotPassword = '/forgot-password';
 }
 
 Route generatedRoutes(RouteSettings settings) {
@@ -65,6 +67,10 @@ Route generatedRoutes(RouteSettings settings) {
     case Routes.register:
       child = const PhoneView();
       break;
+    case Routes.forgotPassword:
+      return MaterialPageRoute(
+        builder: (_) => const ForgetPasswordScreen(),
+      );
     case Routes.selectPetType:
       child = const PetTypeView();
       break;
@@ -84,11 +90,11 @@ Route generatedRoutes(RouteSettings settings) {
       child = const PetListView();
       break;
     case Routes.choosePetForBooking:
-  final args = settings.arguments as ChoosePetForBookingArguments;
-  child = ChoosePetForBookingView(
-    bookingData: args.bookingData,
-  );
-  break;
+      final args = settings.arguments as ChoosePetForBookingArguments;
+      child = ChoosePetForBookingView(
+        bookingData: args.bookingData,
+      );
+      break;
     case Routes.createPet:
       final id = settings.arguments as int;
       child = CreatePetView(id: id);
@@ -145,10 +151,9 @@ Route generatedRoutes(RouteSettings settings) {
   );
 }
 
-
 class ChoosePetForBookingArguments {
   final BookingDataModel bookingData;
-  
+
   ChoosePetForBookingArguments({
     required this.bookingData,
   });

@@ -65,6 +65,7 @@ class _HomeState extends ConsumerState<HomeLayout> {
         userInfo = UserModel.fromMap(Map<String, dynamic>.from(userData));
       }
 
+      await ref.read(petController.notifier).getPetList();
       await ref.read(storeController.notifier).getServiceTypeList();
       await ref.read(storeController.notifier).getTop6Services();
       recommendedServices = ref.read(storeController.notifier).recommendedServices;

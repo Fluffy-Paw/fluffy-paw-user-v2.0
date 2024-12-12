@@ -243,94 +243,113 @@ class _BookingConfirmationLayoutState
   }
 
   Widget _buildStoreInfo() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColor.whiteColor,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Chi nhánh',
-            style: AppTextStyle(context).subTitle.copyWith(
-                  fontWeight: FontWeight.w600,
+  return Container(
+    padding: EdgeInsets.all(16.w),
+    decoration: BoxDecoration(
+      color: AppColor.whiteColor,
+      borderRadius: BorderRadius.circular(12.r),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Chi nhánh',
+          style: AppTextStyle(context).subTitle.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        Gap(8.h),
+        Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.r),
+              child: CachedNetworkImage(
+                // Thay đổi từ store?.logo thành store?.files.first.file
+                imageUrl: store?.files.isNotEmpty == true 
+                    ? store!.files.first.file 
+                    : '',
+                width: 60.w,
+                height: 60.w,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[200],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColor.violetColor,
+                    ),
+                  ),
                 ),
-          ),
-          Gap(8.h),
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.r),
-                child: CachedNetworkImage(
-                  imageUrl: store?.logo ?? '',
-                  width: 60.w,
-                  height: 60.w,
-                  fit: BoxFit.cover,
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[200],
+                  child: Icon(
+                    Icons.store_rounded,
+                    size: 30.sp,
+                    color: Colors.grey[400],
+                  ),
                 ),
               ),
-              Gap(12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      store?.name ?? 'Loading...',
-                      style: AppTextStyle(context).bodyText.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    Gap(4.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 16.sp,
-                          color: AppColor.violetColor,
+            ),
+            Gap(12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    store?.name ?? 'Loading...',
+                    style: AppTextStyle(context).bodyText.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
-                        Gap(4.w),
-                        Expanded(
-                          child: Text(
-                            store?.address ?? 'Loading...',
-                            style: AppTextStyle(context).bodyTextSmall,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Gap(4.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.phone,
-                          size: 16.sp,
-                          color: AppColor.violetColor,
-                        ),
-                        Gap(4.w),
-                        Text(
-                          store?.phone ?? 'Loading...',
+                  ),
+                  Gap(4.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 16.sp,
+                        color: AppColor.violetColor,
+                      ),
+                      Gap(4.w),
+                      Expanded(
+                        child: Text(
+                          store?.address ?? 'Loading...',
                           style: AppTextStyle(context).bodyTextSmall,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  Gap(4.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.phone,
+                        size: 16.sp,
+                        color: AppColor.violetColor,
+                      ),
+                      Gap(4.w),
+                      Text(
+                        store?.phone ?? 'Loading...',
+                        style: AppTextStyle(context).bodyTextSmall,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildPetsList() {
     return Column(

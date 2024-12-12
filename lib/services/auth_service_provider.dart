@@ -7,6 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 abstract class AuthProvider {
   Future<Response> login({required String contact, required String password});
   Future<Response> register(RegisterModel registerModel);
+  Future<Response> forgotPassword({
+    required String phoneNumber,
+    required String newPassword,
+  });
   // Future<Response> registration({
   //   required SignUpModel signUpModel,
   //   required File profile,
@@ -40,6 +44,26 @@ class AuthService implements AuthProvider {
     final response = await ref.read(apiClientProvider).post(
       AppConstants.registerPO,  // Ensure AppConstants.registerUrl is defined
       data: registerModel.toMap(),
+    );
+    return response;
+  }
+  @override
+  Future<Response> forgotPassword({
+    required String phoneNumber,
+    required String newPassword,
+  }) async {
+    // Định dạng số điện thoại để phù hợp với API
+    String formattedPhone = phoneNumber;
+    if (phoneNumber.startsWith('+84')) {
+      formattedPhone = '0${phoneNumber.substring(3)}';
+    }
+
+    final response = await ref.read(apiClientProvider).patch(
+      AppConstants.forgotPasswordUrl,
+      data: {
+        'phoneNumber': formattedPhone,
+        'newPassword': newPassword,
+      },
     );
     return response;
   }

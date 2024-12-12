@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:fluffypawuser/models/wallet/billing_record_model.dart';
 import 'package:fluffypawuser/models/wallet/deposit_link_response.dart';
 import 'package:fluffypawuser/models/wallet/transaction_model.dart';
 import 'package:fluffypawuser/models/wallet/wallet_model.dart';
@@ -16,40 +19,34 @@ class WalletController extends StateNotifier<bool> {
   WalletModel? get walletInfo => _walletInfo;
   List<TransactionModel> _transactions = [];
   List<TransactionModel> get transactions => _transactions;
+  List<BillingRecordModel> _billingRecords = [];
+  List<BillingRecordModel> get billingRecords => _billingRecords;
 
   Future<bool> fetchWalletInfo() async {
     try {
       state = true;
       final response = await ref.read(walletServiceProvider).getWalletInfo();
 
-      if (response.statusCode == 404) {
-        _walletInfo = null;
-        return true;
-      }
-
-      if (response.data['data'] != null) {
+      if (response.statusCode == 200 && response.data['data'] != null) {
         _walletInfo = WalletModel.fromMap(response.data['data']);
-      }
-
-      return true;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
+      } else {
         _walletInfo = null;
-        return true;
       }
-      debugPrint('DioError in fetchWalletInfo: ${e.message}');
-      rethrow;
+      return true;
     } catch (e) {
       debugPrint('Error in fetchWalletInfo: $e');
-      rethrow;
+      _walletInfo = null;
+      return false;
     } finally {
       state = false;
     }
   }
+
   Future<bool> fetchTransactions() async {
     try {
       state = true;
-      final response = await ref.read(walletServiceProvider).getTransactionHistory();
+      final response =
+          await ref.read(walletServiceProvider).getTransactionHistory();
 
       if (response.statusCode == 404) {
         _transactions = [];
@@ -78,12 +75,56 @@ class WalletController extends StateNotifier<bool> {
     }
   }
 
+  Future<bool> updateBankInfo({
+    required String bankName,
+    required String accountNumber,
+    required File qrImage,
+  }) async {
+    try {
+      state = true;
+
+      final formData = FormData.fromMap({
+        'BankName': bankName,
+        'Number': accountNumber,
+        'ImageQR': await MultipartFile.fromFile(
+          qrImage.path,
+          filename: 'qr_code.png',
+        ),
+      });
+
+      final response =
+          await ref.read(walletServiceProvider).updateBankInfo(formData);
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error in updateBankInfo: $e');
+      rethrow;
+    } finally {
+      state = false;
+    }
+  }
+
+  Future<bool> withdrawMoney(int amount) async {
+    try {
+      state = true;
+
+      final response =
+          await ref.read(walletServiceProvider).withdrawMoney(amount);
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error in withdrawMoney: $e');
+      rethrow;
+    } finally {
+      state = false;
+    }
+  }
+
   Future<DepositLinkResponse?> initiateDeposit(int balance) async {
     try {
       state = true;
-      final response = await ref.read(walletServiceProvider).createDepositLink(balance);
+      final response =
+          await ref.read(walletServiceProvider).createDepositLink(balance);
       state = false;
-      
+
       if (response.statusCode == 200 && response.data['data'] != null) {
         return DepositLinkResponse.fromMap(response.data['data']);
       }
@@ -122,6 +163,39 @@ class WalletController extends StateNotifier<bool> {
       debugPrint('Error in cancelPaymentTransaction: $e');
       state = false;
       rethrow;
+    }
+  }
+
+  Future<bool> fetchBillingRecords() async {
+    try {
+      state = true;
+      final response =
+          await ref.read(walletServiceProvider).getBillingRecords();
+
+      if (response.statusCode == 404) {
+        _billingRecords = [];
+        return true;
+      }
+
+      if (response.data['data'] != null) {
+        _billingRecords = (response.data['data'] as List)
+            .map((data) => BillingRecordModel.fromMap(data))
+            .toList();
+      }
+
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        _billingRecords = [];
+        return true;
+      }
+      debugPrint('DioError in fetchBillingRecords: ${e.message}');
+      rethrow;
+    } catch (e) {
+      debugPrint('Error in fetchBillingRecords: $e');
+      rethrow;
+    } finally {
+      state = false;
     }
   }
 }

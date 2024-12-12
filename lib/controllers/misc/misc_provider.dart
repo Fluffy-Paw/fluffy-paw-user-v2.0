@@ -18,6 +18,7 @@ final selectedGender = StateProvider<String>((ref) => '');
 final selectedPetType = StateProvider<int?>((ref) => null);
 final selectedBehaviorCategory = StateProvider<int?>((ref) => null);
 final hasNewBookingProvider = StateProvider<bool>((ref) => false);
+final isLoadingProvider = StateProvider<bool>((ref) => true);
 final bottomTabControllerProvider =
 Provider<PageController>((ref) => PageController());
 

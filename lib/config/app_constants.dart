@@ -6,6 +6,7 @@ class AppConstants {
   static const String registerPO = '$baseUrl/api/Authentication/RegisterPO';
   static const String getAccountDetails = '$baseUrl/api/PetOwner/GetPetOwnerDetail';
   static const String updateProfile = '$baseUrl/api/PetOwner/UpdatePetOwnerAccount';
+  static const String forgotPasswordUrl='$baseUrl/api/Account/ForgotPassword';
   //Brand
   static const String brandById = '$baseUrl/api/PetOwner/GetBrandById';
   //Pet
@@ -39,12 +40,16 @@ class AppConstants {
   static const String cancelPayment='$baseUrl/api/Payment/CancelPayment';
   static const String checkDepositResult='$baseUrl/api/Payment/CheckDepositResult';
   static const String getAllTrancsaction='$baseUrl/api/Transaction/GetTransactions';
+  static const String getAllBillingRecord='$baseUrl/api/PetOwner/GetAllBillingRecord';
+  static const String updateBankInfo = '$baseUrl/api/Wallet/UpdateBankInfomation';
+  static const String withdrawMoney = '$baseUrl/api/Wallet/WithdrawMoney';
   //Booking
   static const String getAllBooking ='$baseUrl/api/PetOwner/GetAllBooking';
   static const String createBooking= '$baseUrl/api/PetOwner/CreateBooking';
   static const String createBookingTimeSelection='$baseUrl/api/PetOwner/CreateBookingTimeSelection';
   static const String cancelBooking ='$baseUrl/api/PetOwner/CancelBooking';
   static const String getBookingById ='$baseUrl/api/Booking/GetBookingById';
+  static const String getAllBookingByPetId ='$baseUrl/api/PetOwner/GetAllBookingByPetId';
   //Tracking
   static const String getAllTrackingByBookingId='$baseUrl/api/PetOwner/GetAllTrackingByBookingId';
   //Notification

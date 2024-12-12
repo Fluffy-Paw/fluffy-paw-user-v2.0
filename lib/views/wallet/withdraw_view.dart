@@ -1,3 +1,4 @@
+import 'package:fluffypawuser/views/wallet/layouts/withdraw.dart';
 import 'package:fluffypawuser/views/wallet/layouts/withdraw_layout.dart';
 import 'package:flutter/material.dart';
 
@@ -6,6 +7,6 @@ class WithdrawView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const WithdrawLayout();
+    return const WithdrawScreen();
   }
 }

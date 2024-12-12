@@ -1,11 +1,10 @@
 class WalletModel {
   final int id;
   final int accountId;
-  final double balance;
+  final int balance;
   final String? bankName;
   final String? number;
   final String? qr;
-  final String? account;
 
   WalletModel({
     required this.id,
@@ -14,30 +13,16 @@ class WalletModel {
     this.bankName,
     this.number,
     this.qr,
-    this.account,
   });
 
   factory WalletModel.fromMap(Map<String, dynamic> map) {
     return WalletModel(
-      id: map['id'],
-      accountId: map['accountId'],
-      balance: map['balance'].toDouble(),
+      id: map['id'] ?? 0,
+      accountId: map['accountId'] ?? 0,
+      balance: map['balance'] ?? 0,
       bankName: map['bankName'],
       number: map['number'],
       qr: map['qr'],
-      account: map['account'],
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'accountId': accountId,
-      'balance': balance,
-      'bankName': bankName,
-      'number': number,
-      'qr': qr,
-      'account': account,
-    };
   }
 }

@@ -9,6 +9,54 @@
 
 import 'package:flutter/widgets.dart';
 
+class $AssetsBanksGen {
+  const $AssetsBanksGen();
+
+  /// File path: assets/banks/acb.svg
+  String get acb => 'assets/banks/acb.svg';
+
+  /// File path: assets/banks/agribank.svg
+  String get agribank => 'assets/banks/agribank.svg';
+
+  /// File path: assets/banks/bidv.svg
+  String get bidv => 'assets/banks/bidv.svg';
+
+  /// File path: assets/banks/mbbank.svg
+  String get mbbank => 'assets/banks/mbbank.svg';
+
+  /// File path: assets/banks/sacombank.svg
+  String get sacombank => 'assets/banks/sacombank.svg';
+
+  /// File path: assets/banks/techcombank.svg
+  String get techcombank => 'assets/banks/techcombank.svg';
+
+  /// File path: assets/banks/tpbank.svg
+  String get tpbank => 'assets/banks/tpbank.svg';
+
+  /// File path: assets/banks/vietcombank.svg
+  String get vietcombank => 'assets/banks/vietcombank.svg';
+
+  /// File path: assets/banks/vietinbank.svg
+  String get vietinbank => 'assets/banks/vietinbank.svg';
+
+  /// File path: assets/banks/vpbank.svg
+  String get vpbank => 'assets/banks/vpbank.svg';
+
+  /// List of all assets
+  List<String> get values => [
+        acb,
+        agribank,
+        bidv,
+        mbbank,
+        sacombank,
+        techcombank,
+        tpbank,
+        vietcombank,
+        vietinbank,
+        vpbank
+      ];
+}
+
 class $AssetsEnvGen {
   const $AssetsEnvGen();
 
@@ -174,6 +222,7 @@ class $AssetsSvgGen {
 class Assets {
   Assets._();
 
+  static const $AssetsBanksGen banks = $AssetsBanksGen();
   static const $AssetsEnvGen env = $AssetsEnvGen();
   static const $AssetsImageGen image = $AssetsImageGen();
   static const $AssetsSvgGen svg = $AssetsSvgGen();

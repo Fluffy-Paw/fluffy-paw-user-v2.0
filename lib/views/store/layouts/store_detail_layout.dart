@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluffypawuser/config/app_color.dart';
 import 'package:fluffypawuser/config/app_text_style.dart';
+import 'package:fluffypawuser/controllers/conversation/conversation_controller.dart';
 import 'package:fluffypawuser/controllers/rating/rating_controller.dart';
 import 'package:fluffypawuser/controllers/store/store_controller.dart';
 import 'package:fluffypawuser/models/pet/pet_model.dart';
@@ -8,6 +9,7 @@ import 'package:fluffypawuser/models/rating/booking_rating_model.dart';
 import 'package:fluffypawuser/models/store/service_time_model.dart';
 import 'package:fluffypawuser/models/store/store_model.dart';
 import 'package:fluffypawuser/models/store/store_service_model.dart';
+import 'package:fluffypawuser/views/conversation/layout/chat_screen.dart';
 import 'package:fluffypawuser/views/store/choose_pet_for_booking_view.dart';
 import 'package:fluffypawuser/views/store/components/store_location_map.dart';
 import 'package:fluffypawuser/views/store/layouts/booking_confirm_sheet_for_hotel.dart';
@@ -87,6 +89,69 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
       }
     }
   }
+  Future<void> _handleChatWithStore() async {
+  try {
+    final store = ref.watch(storeController.notifier).selectedStore;
+    if (store == null) return;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // Get existing or create new conversation
+    final conversation = await ref
+        .read(conversationController.notifier)
+        .createOrGetConversation(store.accountId);
+
+    // Hide loading indicator
+    if (context.mounted) {
+      Navigator.pop(context);
+    }
+
+    if (conversation != null) {
+      // Navigate to chat screen
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              conversationId: conversation.id,
+              poAccountId: store.accountId,
+              storeName: store.name,
+              storeAvatar: store.logo,
+            ),
+          ),
+        );
+      }
+    } else {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Không thể truy cập cuộc trò chuyện. Vui lòng thử lại sau.'),
+          ),
+        );
+      }
+    }
+  } catch (e) {
+    // Hide loading indicator if still showing
+    if (context.mounted) {
+      Navigator.pop(context);
+      
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã xảy ra lỗi: ${e.toString()}'),
+        ),
+      );
+    }
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -786,7 +851,7 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
-                // Xử lý chức năng chat
+                _handleChatWithStore();
               },
               icon: Icon(
                 Icons.chat,
@@ -794,7 +859,7 @@ class _StoreDetailLayoutState extends ConsumerState<StoreDetailLayout> {
                 size: 24.sp,
               ),
               label: Text(
-                'Chat with Store',
+                'Nhắn tin với cửa hàng',
                 style: AppTextStyle(context).buttonText,
               ),
               style: ElevatedButton.styleFrom(

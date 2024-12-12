@@ -155,7 +155,16 @@ flutter:
     - assets/env/api_key.env
     - assets/image/medium-shot-girl-petting-dog-bed.jpg
     - assets/image/ks-cho-meo500-5587-1549156792.jpg
-
+    - assets/banks/acb.svg
+    - assets/banks/agribank.svg
+    - assets/banks/bidv.svg
+    - assets/banks/mbbank.svg
+    - assets/banks/sacombank.svg
+    - assets/banks/techcombank.svg
+    - assets/banks/tpbank.svg
+    - assets/banks/vietcombank.svg
+    - assets/banks/vietinbank.svg
+    - assets/banks/vpbank.svg
 flutter_intl:
   enabled: true
   use_deferred_loading: false

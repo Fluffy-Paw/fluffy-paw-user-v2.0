@@ -11,6 +11,7 @@ import 'package:fluffypawuser/routes.dart';
 import 'package:fluffypawuser/utils/context_less_navigation.dart';
 import 'package:fluffypawuser/utils/global_function.dart';
 import 'package:fluffypawuser/views/bottom_navigation_bar/layouts/bottom_navigation_layout.dart';
+import 'package:fluffypawuser/views/forget_password/ForgetPasswordScreen.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -132,6 +133,22 @@ class _LoginLayoutState extends ConsumerState<LoginLayout> {
                   ),
                 ),
                 Gap(50.h),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: // Trong LoginLayout, thêm vào phần build
+                      TextButton(
+                    onPressed: () =>
+                        context.nav.pushNamed(Routes.forgotPassword),
+                    child: Text(
+                      'Quên mật khẩu?',
+                      style: AppTextStyle(context).bodyText.copyWith(
+                            color: colors(context).primaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ),
+                ),
+                Gap(30.h),
                 ref.watch(authController)
                     ? const Align(
                         alignment: Alignment.center,

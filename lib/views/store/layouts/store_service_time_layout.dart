@@ -250,203 +250,214 @@ class _ServiceTimeSelectionScreenState
     );
   }
 
-  Widget _buildTimeSlotsList() {
-    final filteredSlots = allTimeSlots
-        .where((slot) => DateUtils.isSameDay(slot.startTime, selectedDate))
-        .toList();
+ Widget _buildTimeSlotsList() {
+  final filteredSlots = allTimeSlots
+      .where((slot) => DateUtils.isSameDay(slot.startTime, selectedDate))
+      .toList();
 
-    // Group by storeId
-    // Group slots by storeId using a Map
-    final groupedSlots = filteredSlots.fold<Map<int, List<ServiceTimeModel>>>(
-      {},
-      (map, slot) {
-        if (!map.containsKey(slot.storeId)) {
-          map[slot.storeId] = [];
-        }
-        map[slot.storeId]!.add(slot);
-        return map;
-      },
+  // Group slots by storeId using a Map
+  final groupedSlots = filteredSlots.fold<Map<int, List<ServiceTimeModel>>>(
+    {},
+    (map, slot) {
+      if (!map.containsKey(slot.storeId)) {
+        map[slot.storeId] = [];
+      }
+      map[slot.storeId]!.add(slot);
+      return map;
+    },
+  );
+
+  if (filteredSlots.isEmpty) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.event_busy,
+            size: 64.sp,
+            color: Colors.grey[400],
+          ),
+          Gap(16.h),
+          Text(
+            'No available time slots',
+            style: AppTextStyle(context).subTitle.copyWith(
+                  color: Colors.grey[600],
+                ),
+          ),
+        ],
+      ),
     );
+  }
 
-    if (filteredSlots.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.event_busy,
-              size: 64.sp,
-              color: Colors.grey[400],
-            ),
-            Gap(16.h),
-            Text(
-              'No available time slots',
-              style: AppTextStyle(context).subTitle.copyWith(
-                    color: Colors.grey[600],
-                  ),
+  return ListView.builder(
+    padding: EdgeInsets.all(16.w),
+    itemCount: groupedSlots.length,
+    itemBuilder: (context, index) {
+      final storeId = groupedSlots.keys.elementAt(index);
+      final storeSlots = groupedSlots[storeId]!;
+      final store = storeDetails[storeId];
+
+      return Container(
+        margin: EdgeInsets.only(bottom: 16.h),
+        decoration: BoxDecoration(
+          color: AppColor.whiteColor,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, 2),
             ),
           ],
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: EdgeInsets.all(16.w),
-      itemCount: groupedSlots.length,
-      itemBuilder: (context, index) {
-        final storeId = groupedSlots.keys.elementAt(index);
-        final storeSlots = groupedSlots[storeId]!;
-        final store = storeDetails[storeId];
-
-        return Container(
-          margin: EdgeInsets.only(bottom: 16.h),
-          decoration: BoxDecoration(
-            color: AppColor.whiteColor,
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Store Header
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Row(
-                  children: [
-                    Container(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Store Header
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Container(
                       width: 50.w,
                       height: 50.w,
+                      child: store?.files.isNotEmpty == true 
+                        ? Image.network(
+                            store!.files.first.file,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey[200],
+                              child: Icon(
+                                Icons.store_rounded,
+                                size: 24.sp,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey[200],
+                            child: Icon(
+                              Icons.store_rounded,
+                              size: 24.sp,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                    ),
+                  ),
+                  Gap(12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          store?.name ?? 'Store',
+                          style: AppTextStyle(context).bodyText.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 16.sp,
+                              color: AppColor.violetColor,
+                            ),
+                            Gap(4.w),
+                            Expanded(
+                              child: Text(
+                                store?.address ?? '',
+                                style: AppTextStyle(context).bodyTextSmall.copyWith(
+                                      color: Colors.grey[600],
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1),
+            // Time Slots Grid
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: storeSlots.map((slot) {
+                  final isAvailable = slot.currentPetOwner < slot.limitPetOwner;
+                  return GestureDetector(
+                    onTap: isAvailable
+                        ? () {
+                            setState(() {
+                              selectedTimeSlot = slot;
+                            });
+                          }
+                        : null,
+                    child: Container(
+                      width: (MediaQuery.of(context).size.width - 64.w) / 3,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 8.h,
+                        horizontal: 12.w,
+                      ),
                       decoration: BoxDecoration(
+                        color: isAvailable
+                            ? slot == selectedTimeSlot
+                                ? AppColor.violetColor
+                                : AppColor.violetColor.withOpacity(0.1)
+                            : Colors.grey[200],
                         borderRadius: BorderRadius.circular(8.r),
-                        image: DecorationImage(
-                          image: NetworkImage(store?.logo ?? ''),
-                          fit: BoxFit.cover,
+                        border: Border.all(
+                          color: isAvailable
+                              ? slot == selectedTimeSlot
+                                  ? AppColor.violetColor
+                                  : AppColor.violetColor
+                              : Colors.grey[300]!,
                         ),
                       ),
-                    ),
-                    Gap(12.w),
-                    Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            store?.name ?? 'Store',
+                            DateFormat('HH:mm').format(slot.startTime),
                             style: AppTextStyle(context).bodyText.copyWith(
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w600,
+                                  color: isAvailable
+                                      ? slot == selectedTimeSlot
+                                          ? Colors.white
+                                          : AppColor.violetColor
+                                      : Colors.grey[600],
                                 ),
                           ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 16.sp,
-                                color: AppColor.violetColor,
-                              ),
-                              Gap(4.w),
-                              Expanded(
-                                child: Text(
-                                  store?.address ?? '',
-                                  style: AppTextStyle(context)
-                                      .bodyTextSmall
-                                      .copyWith(
-                                        color: Colors.grey[600],
-                                      ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                          Gap(4.h),
+                          Text(
+                            '${slot.currentPetOwner}/${slot.limitPetOwner}',
+                            style: AppTextStyle(context).bodyTextSmall.copyWith(
+                                  color: isAvailable
+                                      ? slot == selectedTimeSlot
+                                          ? Colors.white
+                                          : AppColor.violetColor.withOpacity(0.8)
+                                      : Colors.grey[600],
                                 ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                }).toList(),
               ),
-              Divider(height: 1),
-              // Time Slots Grid
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Wrap(
-                  spacing: 8.w,
-                  runSpacing: 8.h,
-                  children: storeSlots.map((slot) {
-                    final isAvailable =
-                        slot.currentPetOwner < slot.limitPetOwner;
-                    return GestureDetector(
-                      onTap: isAvailable
-                          ? () {
-                              setState(() {
-                                selectedTimeSlot = slot;
-                              });
-                            }
-                          : null,
-                      child: Container(
-                        width: (MediaQuery.of(context).size.width - 64.w) / 3,
-                        padding: EdgeInsets.symmetric(
-                          vertical: 8.h,
-                          horizontal: 12.w,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isAvailable
-                              ? slot == selectedTimeSlot
-                                  ? AppColor.violetColor
-                                  : AppColor.violetColor.withOpacity(0.1)
-                              : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: isAvailable
-                                ? slot == selectedTimeSlot
-                                    ? AppColor.violetColor
-                                    : AppColor.violetColor
-                                : Colors.grey[300]!,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              DateFormat('HH:mm').format(slot.startTime),
-                              style: AppTextStyle(context).bodyText.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: isAvailable
-                                        ? slot == selectedTimeSlot
-                                            ? Colors.white
-                                            : AppColor.violetColor
-                                        : Colors.grey[600],
-                                  ),
-                            ),
-                            Gap(4.h),
-                            Text(
-                              '${slot.currentPetOwner}/${slot.limitPetOwner}',
-                              style:
-                                  AppTextStyle(context).bodyTextSmall.copyWith(
-                                        color: isAvailable
-                                            ? slot == selectedTimeSlot
-                                                ? Colors.white
-                                                : AppColor.violetColor
-                                                    .withOpacity(0.8)
-                                            : Colors.grey[600],
-                                      ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   void onSelectTimeSlot() async {
   if (selectedTimeSlot == null) return;
